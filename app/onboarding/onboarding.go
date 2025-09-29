@@ -1,0 +1,204 @@
+package onboarding
+
+import (
+	"context"
+	"fmt"
+	"log"
+	"strconv"
+
+	"gorm.io/gorm"
+)
+
+type Onboarding struct {
+	ext     IExternal
+	db      *gorm.DB
+	service IService
+	repo    Irepo
+}
+
+func New(ext IExternal, db *gorm.DB, service IService, repo Irepo) *Onboarding {
+	return &Onboarding{
+		ext:     ext,
+		db:      db,
+		service: service,
+		repo:    repo,
+	}
+}
+func (u *Onboarding) PreCitizenship(ctx context.Context, token string, publicKey string) (resp PreCitizenshipResp, err error) {
+	var scope, scopeAppman, scopeCustomer, scopeCustomerData []func(*gorm.DB) *gorm.DB
+	var step int
+
+	tx := u.db.Begin()
+	defer tx.Commit()
+	timeNow := u.ext.GetTimeNow()
+
+	data, err := u.service.VerifyToken(token, []byte(publicKey))
+	if err != nil {
+		return PreCitizenshipResp{}, err
+	}
+	var memberId string
+	if data.MemberID > 0 {
+		memberId = strconv.Itoa(data.MemberID)
+	} else {
+		memberId = strconv.Itoa(data.UserID)
+	}
+
+	var appman []AppmanDB
+
+	scopeAppman = append(scopeAppman, Where("member_id = ?", memberId))
+	scopeAppman = append(scopeAppman, Where("dopa_status = ?", true))
+	scopeAppman = append(scopeAppman, Order("updated_at desc"))
+	if err = u.repo.Appman.GetAll(ctx, u.db, &appman, scopeAppman...); err != nil {
+		tx.Rollback()
+		return PreCitizenshipResp{}, err
+	}
+
+	if len(appman) == 0 {
+		var queryPremember = []PreMemberDB{}
+		premember := []PreMemberDB{
+			{
+				BaseGorm: BaseGorm{
+					CreatedAt: timeNow,
+					UpdatedAt: timeNow,
+				},
+				ID:       u.ext.GenUuid(),
+				Email:    data.Email,
+				Mobile:   data.Mobile,
+				MemberID: memberId,
+			},
+		}
+
+		col := []string{
+			"created_at",
+			"updated_at",
+			"id",
+			"member_id",
+			"email",
+			"mobile",
+		}
+
+		scope = append(scope, Select(col))
+		if len(data.Mobile) > 0 && len(data.Email) > 0 {
+			scope = append(scope, Where("email = ? OR mobile = ?", data.Email, data.Mobile))
+		}
+		if len(data.Mobile) == 0 && len(data.Email) > 0 {
+			scope = append(scope, Where("email = ?", data.Email))
+		}
+		if len(data.Mobile) > 0 && len(data.Email) == 0 {
+			scope = append(scope, Where("mobile = ?", data.Mobile))
+		}
+		if err = u.repo.PreMember.GetAll(ctx, u.db, &queryPremember, scope...); err != nil {
+			tx.Rollback()
+			return PreCitizenshipResp{}, err
+		}
+		log.Printf("queryPremember %+v\n", queryPremember)
+		if len(queryPremember) <= 0 {
+			if err = u.repo.PreMember.CreateAll(ctx, u.db, &premember); err != nil {
+				tx.Rollback()
+				return PreCitizenshipResp{}, err
+			}
+		} else {
+			if err = u.repo.PreMember.UpdateAll(ctx, tx, &premember[0], scope...); err != nil {
+				tx.Rollback()
+				return PreCitizenshipResp{}, err
+			}
+		}
+	}
+	preMemberResp := []PreMemberDB{}
+	scopeCustomerData = append(scopeCustomerData, Where("member_id = ?", memberId))
+
+	err = u.repo.PreMember.JoinCustomer(ctx, u.db, &preMemberResp, scopeCustomerData...)
+	if err != nil {
+		tx.Rollback()
+		return PreCitizenshipResp{}, err
+	}
+
+	if len(preMemberResp) > 0 {
+		step = preMemberResp[0].Customer.Step
+		resp.CustomerData = CustomerData{
+			Email:  preMemberResp[0].Email,
+			Mobile: preMemberResp[0].Mobile,
+			// Column:             preMemberResp[0].Column,
+			MemberID: preMemberResp[0].MemberID,
+			Fullname: &CustomerFullname{
+				BaseGorm: BaseGorm{
+					CreatedAt: preMemberResp[0].Customer.CreatedAt,
+					UpdatedAt: preMemberResp[0].Customer.UpdatedAt,
+				},
+				ID:           preMemberResp[0].Customer.ID,
+				MemberID:     preMemberResp[0].Customer.MemberID,
+				Citizenship:  preMemberResp[0].Customer.Citizenship,
+				Title:        preMemberResp[0].Customer.Title,
+				ThName:       preMemberResp[0].Customer.ThName,
+				ThMiddleName: preMemberResp[0].Customer.ThMiddleName,
+				ThSurname:    preMemberResp[0].Customer.ThSurname,
+				EnName:       preMemberResp[0].Customer.EnName,
+				EnMiddleName: preMemberResp[0].Customer.EnMiddleName,
+				EnSurname:    preMemberResp[0].Customer.EnSurname,
+				Mobile:       preMemberResp[0].Customer.Mobile,
+				Email:        preMemberResp[0].Customer.Email,
+				Agreement:    preMemberResp[0].Customer.Agreement,
+				Step:         preMemberResp[0].Customer.Step,
+				Type:         preMemberResp[0].Customer.Type,
+			},
+			IDCard: &IDCardDetail{
+				DateOfBirth: preMemberResp[0].Customer.DateOfBirth,
+				Status:      preMemberResp[0].Customer.Status,
+				IDCard:      preMemberResp[0].Customer.IDCard,
+				LaserCode:   preMemberResp[0].Customer.LaserCode,
+				ExpireDate:  preMemberResp[0].Customer.ExpireDate,
+			},
+			SuiteTest:     &preMemberResp[0].SuiteTest,
+			Document:      &preMemberResp[0].Document,
+			Addresses:     preMemberResp[0].Addresses,
+			SourceOfFund:  &preMemberResp[0].SourceOfFund,
+			Occupation:    &preMemberResp[0].Occupation,
+			Banks:         preMemberResp[0].Banks,
+			KnowledgeTest: preMemberResp[0].Customer.KnowledgeTest,
+		}
+
+		if preMemberResp[0].SuiteTest.ID == "" {
+			resp.CustomerData.SuiteTest = nil
+		}
+		if preMemberResp[0].Document.ID == "" {
+			resp.CustomerData.Document = nil
+		}
+		if preMemberResp[0].SourceOfFund.ID == "" {
+			resp.CustomerData.SourceOfFund = nil
+		}
+		if preMemberResp[0].Occupation.ID == "" {
+			resp.CustomerData.Occupation = nil
+		}
+		if len(preMemberResp[0].Banks) == 0 {
+			resp.CustomerData.Banks = nil
+		}
+		if len(preMemberResp[0].Addresses) == 0 {
+			resp.CustomerData.Addresses = nil
+		}
+	}
+
+	resp.Member.ID = memberId
+	resp.Member.Email = data.Email
+	resp.Member.Mobile = data.Mobile
+	fmt.Println("lenappman", len(appman))
+	if len(appman) > 0 {
+		if step == 0 {
+			step = 50
+		}
+		resp.Member.Citizenship = 1
+		var customer []CustomerDetailsDB
+		scopeCustomer = append(scopeCustomer, Where("member_id = ?", memberId))
+		if err = u.repo.Customer.GetAll(ctx, u.db, &customer, scopeCustomer...); err != nil {
+			tx.Rollback()
+			return PreCitizenshipResp{}, err
+		}
+		fmt.Println("len customer", len(customer))
+		if len(customer) > 0 {
+			resp.Member.Citizenship = customer[0].Citizenship
+		}
+		resp.Step = step
+		// }
+	}
+
+	return
+}
