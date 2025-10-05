@@ -28,6 +28,19 @@ type OnboardingTestSuite struct {
 	uc *snrdev.Onboarding
 }
 
+type OnboardingUnitTestSuite struct {
+	suite.Suite
+	ctx  context.Context
+	ctrl *gomock.Controller
+
+	ext     *mock.MockIExternal
+	db      *gorm.DB
+	service *mock.MockIService
+	repo    snrdev.Irepo
+
+	uc *snrdev.Onboarding
+}
+
 func setupMock() *gorm.DB {
 
 	sqlDB, mock, err := sqlmock.New()
@@ -74,6 +87,35 @@ func (s *OnboardingTestSuite) SetupTest() {
 	s.uc = snrdev.New(s.ext, s.db, s.service, s.repo)
 }
 
+func (s *OnboardingUnitTestSuite) SetupTest() {
+	s.ctrl = gomock.NewController(s.T())
+
+	s.ctx = context.Background()
+	s.db = setupMock()
+	s.ext = mock.NewMockIExternal(s.ctrl)
+	s.service = mock.NewMockIService(s.ctrl)
+	s.repo = snrdev.Irepo{
+		Customer:       mock.NewMockICustomer(s.ctrl),
+		PreMember:      mock.NewMockIPreMember(s.ctrl),
+		IDCard:         mock.NewMockIIDcard(s.ctrl),
+		Suitetest:      mock.NewMockISuitetest(s.ctrl),
+		Answer:         mock.NewMockIAnswer(s.ctrl),
+		Appman:         mock.NewMockIAppman(s.ctrl),
+		Document:       mock.NewMockIDocument(s.ctrl),
+		Address:        mock.NewMockIAddress(s.ctrl),
+		SourceOfFunds:  mock.NewMockISourceOfFunds(s.ctrl),
+		Bank:           mock.NewMockIBank(s.ctrl),
+		Occupation:     mock.NewMockIOccupation(s.ctrl),
+		Liveness:       mock.NewMockILiveness(s.ctrl),
+		LivenessAtt:    mock.NewMockILivenessAttributes(s.ctrl),
+		Recognition:    mock.NewMockIRecognition(s.ctrl),
+		MasterLocation: mock.NewMockIMasterLocation(s.ctrl),
+		RiskScore:      mock.NewMockIRiskScore(s.ctrl),
+		Cdd:            mock.NewMockICdd(s.ctrl),
+	}
+	s.uc = snrdev.New(s.ext, s.db, s.service, s.repo)
+}
+
 func (s *OnboardingTestSuite) TearDownTest() {
 
 	s.ctrl.Finish()
@@ -83,21 +125,25 @@ func TestIntegratedTest(t *testing.T) {
 	suite.Run(t, new(OnboardingTestSuite))
 }
 
-func (s *OnboardingTestSuite) Test_GetMemberId_NoMemberID() {
+func TestUnitTest(t *testing.T) {
+	suite.Run(t, new(OnboardingUnitTestSuite))
+}
+
+func (s *OnboardingUnitTestSuite) Test_GetMemberId_NoMemberID() {
 	noMemberId := -1
 	userId := 2
 	memberId := s.uc.TestGetMemberId(noMemberId, userId)
 	s.Equal(strconv.Itoa(userId), memberId)
 }
 
-func (s *OnboardingTestSuite) Test_GetMemberId_HasMemberID() {
+func (s *OnboardingUnitTestSuite) Test_GetMemberId_HasMemberID() {
 	member1 := 1
 	userId := 2
 	memberId := s.uc.TestGetMemberId(member1, userId)
 	s.Equal(strconv.Itoa(member1), memberId)
 }
 
-func (s *OnboardingTestSuite) Test_getScopeAppman_Success() {
+func (s *OnboardingUnitTestSuite) Test_getScopeAppman_Success() {
 	var scopesAppman []func(*gorm.DB) *gorm.DB
 	var appman []snrdev.AppmanDB
 	tx := s.db.Begin()
@@ -118,7 +164,7 @@ func (s *OnboardingTestSuite) Test_getScopeAppman_Success() {
 	s.Equal(preCitizenshipAppmanGetAllReturn, actual)
 }
 
-func (s *OnboardingTestSuite) Test_upsertPremember_UpdateAllSuccess() {
+func (s *OnboardingUnitTestSuite) Test_upsertPremember_UpdateAllSuccess() {
 	var queryPrememberGetAll = []snrdev.PreMemberDB{}
 	var scopesAppman []func(*gorm.DB) *gorm.DB
 	var appman []snrdev.AppmanDB
@@ -144,7 +190,7 @@ func (s *OnboardingTestSuite) Test_upsertPremember_UpdateAllSuccess() {
 	s.NoError(err)
 }
 
-func (s *OnboardingTestSuite) Test_upsertPremember_CreateAllSuccess() {
+func (s *OnboardingUnitTestSuite) Test_upsertPremember_CreateAllSuccess() {
 	var queryPrememberGetAll = []snrdev.PreMemberDB{}
 	var scopesAppman []func(*gorm.DB) *gorm.DB
 	var appman []snrdev.AppmanDB
@@ -169,7 +215,7 @@ func (s *OnboardingTestSuite) Test_upsertPremember_CreateAllSuccess() {
 	s.NoError(err)
 }
 
-func (s *OnboardingTestSuite) Test_getJoinedCustomerInfo_Success() {
+func (s *OnboardingUnitTestSuite) Test_getJoinedCustomerInfo_Success() {
 	var scopeCustomerData []func(*gorm.DB) *gorm.DB
 	var preMembers []snrdev.PreMemberDB
 	tx := s.db.Begin()
@@ -189,7 +235,7 @@ func (s *OnboardingTestSuite) Test_getJoinedCustomerInfo_Success() {
 	s.Empty(err)
 }
 
-func (s *OnboardingTestSuite) Test_mapToMemberResponse_NoData() {
+func (s *OnboardingUnitTestSuite) Test_mapToMemberResponse_NoData() {
 	step, resp := s.uc.TestMapToMemberResponse([]snrdev.PreMemberDB{}, precitizenToken.Email, precitizenToken.Mobile, strconv.Itoa(precitizenToken.MemberID))
 	s.Empty(step)
 	s.Equal(precitizenToken.Email, resp.Member.Email)
@@ -197,7 +243,7 @@ func (s *OnboardingTestSuite) Test_mapToMemberResponse_NoData() {
 	s.Equal(strconv.Itoa(precitizenToken.MemberID), resp.Member.ID)
 }
 
-func (s *OnboardingTestSuite) Test_mapToMemberResponse_Success() {
+func (s *OnboardingUnitTestSuite) Test_mapToMemberResponse_Success() {
 	step, resp := s.uc.TestMapToMemberResponse(preCitizenshipPreMemberGetAllReturn, precitizenToken.Email, precitizenToken.Mobile, strconv.Itoa(precitizenToken.MemberID))
 	s.NotEmpty(step)
 	s.NotEmpty(resp)
@@ -207,7 +253,7 @@ func (s *OnboardingTestSuite) Test_mapToMemberResponse_Success() {
 	s.Equal(preCitizenshipPreMemberGetAllReturn[0].Customer.ID, resp.CustomerData.Fullname.ID)
 }
 
-func (s *OnboardingTestSuite) Test_getCustomerInfo_NoResults() {
+func (s *OnboardingUnitTestSuite) Test_getCustomerInfo_NoResults() {
 	tx := s.db.Begin()
 	defer tx.Commit()
 
@@ -223,7 +269,7 @@ func (s *OnboardingTestSuite) Test_getCustomerInfo_NoResults() {
 	s.Empty(customer)
 }
 
-func (s *OnboardingTestSuite) Test_getCustomerInfo_WithResults() {
+func (s *OnboardingUnitTestSuite) Test_getCustomerInfo_WithResults() {
 	tx := s.db.Begin()
 	defer tx.Commit()
 
