@@ -183,6 +183,18 @@ func (u *Onboarding) getCustomerInfo(memberId string, ctx context.Context, tx *g
 	return
 }
 
+func (u *Onboarding) setCitizenship(resp *PreCitizenshipResp, memberId string, ctx context.Context, tx *gorm.DB) (err error) {
+	resp.Member.Citizenship = 1
+	customer, err := u.getCustomerInfo(memberId, ctx, tx)
+	if err != nil {
+		return err
+	}
+	if len(customer) > 0 {
+		resp.Member.Citizenship = customer[0].Citizenship
+	}
+	return
+}
+
 func (u *Onboarding) Snr_Dev_Exam(ctx context.Context, token string, publicKey string) (resp PreCitizenshipResp, err error) {
 	var step int
 
@@ -214,15 +226,8 @@ func (u *Onboarding) Snr_Dev_Exam(ctx context.Context, token string, publicKey s
 		if step == 0 {
 			step = 50
 		}
-		resp.Member.Citizenship = 1
-		customer, err := u.getCustomerInfo(memberId, ctx, tx)
-		if err != nil {
-			return PreCitizenshipResp{}, err
-		}
-		if len(customer) > 0 {
-			resp.Member.Citizenship = customer[0].Citizenship
-		}
 		resp.Step = step
+		u.setCitizenship(&resp, memberId, ctx, tx)
 	}
 
 	return

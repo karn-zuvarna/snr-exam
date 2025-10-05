@@ -289,6 +289,40 @@ func (s *OnboardingUnitTestSuite) Test_getCustomerInfo_WithResults() {
 	s.Equal(preCitizenshipPreMemberGetAllReturn[0].Customer.Citizenship, customer[0].Citizenship)
 }
 
+func (s *OnboardingUnitTestSuite) Test_setCitizenship_NoCustomers() {
+	tx := s.db.Begin()
+	defer tx.Commit()
+
+	var customerDetails []snrdev.CustomerDetailsDB
+	s.repo.Customer.(*mock.MockICustomer).EXPECT().GetAll(s.ctx, s.db, &customerDetails, gomock.Any()).DoAndReturn(
+		func(ctx context.Context, db *gorm.DB, data *[]snrdev.CustomerDetailsDB, scope ...func(*gorm.DB) *gorm.DB) error {
+			*data = []snrdev.CustomerDetailsDB{}
+			return nil
+		})
+
+	var response = snrdev.PreCitizenshipResp{}
+	err := s.uc.TestSetCitizenship(&response, strconv.Itoa(precitizenToken.MemberID), s.ctx, tx)
+	s.Empty(err)
+	s.Equal(1, response.Member.Citizenship)
+}
+
+func (s *OnboardingUnitTestSuite) Test_setCitizenship_HasCustomers() {
+	tx := s.db.Begin()
+	defer tx.Commit()
+
+	var customerDetails []snrdev.CustomerDetailsDB
+	s.repo.Customer.(*mock.MockICustomer).EXPECT().GetAll(s.ctx, s.db, &customerDetails, gomock.Any()).DoAndReturn(
+		func(ctx context.Context, db *gorm.DB, data *[]snrdev.CustomerDetailsDB, scope ...func(*gorm.DB) *gorm.DB) error {
+			*data = []snrdev.CustomerDetailsDB{preCitizenshipPreMemberGetAllReturn[0].Customer}
+			return nil
+		})
+
+	var response = snrdev.PreCitizenshipResp{}
+	err := s.uc.TestSetCitizenship(&response, strconv.Itoa(precitizenToken.MemberID), s.ctx, tx)
+	s.Empty(err)
+	s.Equal(preCitizenshipPreMemberGetAllReturn[0].Customer.Citizenship, response.Member.Citizenship)
+}
+
 func (s *OnboardingTestSuite) Test_Snr_Dev_Exam_NoAppman_Success() {
 	var scopesAppman []func(*gorm.DB) *gorm.DB
 	var appman []snrdev.AppmanDB

@@ -29,3 +29,7 @@ func (u *Onboarding) TestMapToMemberResponse(preMemberResp []PreMemberDB, emailD
 func (u *Onboarding) TestGetCustomerInfo(memberId string, ctx context.Context, tx *gorm.DB) (customer []CustomerDetailsDB, err error) {
 	return u.getCustomerInfo(memberId, ctx, tx)
 }
+
+func (u *Onboarding) TestSetCitizenship(resp *PreCitizenshipResp, memberId string, ctx context.Context, tx *gorm.DB) (err error) {
+	return u.setCitizenship(resp, memberId, ctx, tx)
+}
