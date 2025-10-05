@@ -31,21 +31,20 @@ func (u *Onboarding) getMemberId(memberID int, userID int) string {
 	}
 }
 
-func (u *Onboarding) getScopeAppman(memberId string, ctx context.Context, tx *gorm.DB) ([]AppmanDB, error) {
+func (u *Onboarding) getScopeAppman(memberId string, ctx context.Context, tx *gorm.DB) (appman []AppmanDB, err error) {
 	var scopeAppman []func(*gorm.DB) *gorm.DB
-	var appman []AppmanDB
 
 	scopeAppman = append(scopeAppman, Where("member_id = ?", memberId))
 	scopeAppman = append(scopeAppman, Where("dopa_status = ?", true))
 	scopeAppman = append(scopeAppman, Order("updated_at desc"))
-	err := u.repo.Appman.GetAll(ctx, u.db, &appman, scopeAppman...)
+	err = u.repo.Appman.GetAll(ctx, u.db, &appman, scopeAppman...)
 	if err != nil {
 		tx.Rollback()
 	}
-	return appman, err
+	return
 }
 
-func (u *Onboarding) upsertPreMember(uuid string, emailData string, mobileData string, memberId string, appman []AppmanDB, ctx context.Context, tx *gorm.DB) error {
+func (u *Onboarding) upsertPreMember(uuid string, emailData string, mobileData string, memberId string, appman []AppmanDB, ctx context.Context, tx *gorm.DB) (err error) {
 	var scope []func(*gorm.DB) *gorm.DB
 
 	if len(appman) == 0 {
@@ -94,7 +93,7 @@ func (u *Onboarding) upsertPreMember(uuid string, emailData string, mobileData s
 			}
 		}
 	}
-	return nil
+	return
 }
 
 func (u *Onboarding) getJoinedCustomerInfo(memberId string, ctx context.Context, tx *gorm.DB) (preMemberResp []PreMemberDB, err error) {
