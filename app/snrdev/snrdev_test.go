@@ -91,6 +91,20 @@ func TestIntegratedTest(t *testing.T) {
 // 	s.Equal(preCitizenshipExpectedResponse, actual)
 // }
 
+func (s *OnboardingTestSuite) Test_GetMemberId_NoMemberID() {
+	noMemberId := -1
+	userId := 2
+	memberId := s.uc.TestGetMemberId(noMemberId, userId)
+	s.Equal(strconv.Itoa(userId), memberId)
+}
+
+func (s *OnboardingTestSuite) Test_GetMemberId_HasMemberID() {
+	member1 := 1
+	userId := 2
+	memberId := s.uc.TestGetMemberId(member1, userId)
+	s.Equal(strconv.Itoa(member1), memberId)
+}
+
 func (s *OnboardingTestSuite) Test_getScopeAppman_Success() {
 	var scopesAppman []func(*gorm.DB) *gorm.DB
 	var appman []snrdev.AppmanDB

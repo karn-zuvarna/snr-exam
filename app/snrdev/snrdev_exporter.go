@@ -6,6 +6,10 @@ import (
 	"gorm.io/gorm"
 )
 
+func (u *Onboarding) TestGetMemberId(memberID int, userID int) string {
+	return u.getMemberId(memberID, userID)
+}
+
 func (u *Onboarding) TestGetScopeAppman(memberId string, ctx context.Context, tx *gorm.DB) ([]AppmanDB, error) {
 	return u.getScopeAppman(memberId, ctx, tx)
 }
