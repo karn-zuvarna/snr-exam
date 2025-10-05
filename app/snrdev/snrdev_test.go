@@ -131,7 +131,7 @@ func (s *OnboardingTestSuite) Test_getScopeAppman_Success() {
 	s.Equal(preCitizenshipAppmanGetAllReturn, actual)
 }
 
-func (s *OnboardingTestSuite) Test_upsertPremember_Success() {
+func (s *OnboardingTestSuite) Test_upsertPremember_UpdateAllSuccess() {
 	var queryPrememberGetAll = []snrdev.PreMemberDB{}
 	var scopesAppman []func(*gorm.DB) *gorm.DB
 	var appman []snrdev.AppmanDB
@@ -155,4 +155,22 @@ func (s *OnboardingTestSuite) Test_upsertPremember_Success() {
 		})
 	err := s.uc.TestUpsertPremember(s.ext.GenUuid(), precitizenToken.Email, precitizenToken.Mobile, strconv.Itoa(precitizenToken.MemberID), appman, s.ctx, tx)
 	s.NoError(err)
+}
+
+func (s *OnboardingTestSuite) Test_mapToMemberResponse_NoData() {
+	step, resp := s.uc.TestMapToMemberResponse([]snrdev.PreMemberDB{}, precitizenToken.Email, precitizenToken.Mobile, strconv.Itoa(precitizenToken.MemberID))
+	s.Empty(step)
+	s.Equal(precitizenToken.Email, resp.Member.Email)
+	s.Equal(precitizenToken.Mobile, resp.Member.Mobile)
+	s.Equal(strconv.Itoa(precitizenToken.MemberID), resp.Member.ID)
+}
+
+func (s *OnboardingTestSuite) Test_mapToMemberResponse_Success() {
+	step, resp := s.uc.TestMapToMemberResponse(preCitizenshipPreMemberGetAllReturn, precitizenToken.Email, precitizenToken.Mobile, strconv.Itoa(precitizenToken.MemberID))
+	s.NotEmpty(step)
+	s.NotEmpty(resp)
+	s.Equal(precitizenToken.Email, resp.CustomerData.Email)
+	s.Equal(precitizenToken.Mobile, resp.CustomerData.Mobile)
+	s.Equal(strconv.Itoa(precitizenToken.MemberID), resp.CustomerData.MemberID)
+	s.Equal(preCitizenshipPreMemberGetAllReturn[0].Customer.ID, resp.CustomerData.Fullname.ID)
 }

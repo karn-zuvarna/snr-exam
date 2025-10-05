@@ -13,3 +13,7 @@ func (u *Onboarding) TestGetScopeAppman(scopeAppman []func(*gorm.DB) *gorm.DB, m
 func (u *Onboarding) TestUpsertPremember(uuid string, emailData string, mobileData string, memberId string, appman []AppmanDB, ctx context.Context, tx *gorm.DB) error {
 	return u.upsertPreMember(uuid, emailData, mobileData, memberId, appman, ctx, tx)
 }
+
+func (u *Onboarding) TestMapToMemberResponse(preMemberResp []PreMemberDB, emailData string, mobileData string, memberId string) (step int, resp PreCitizenshipResp) {
+	return u.mapToMemberResponse(preMemberResp, emailData, mobileData, memberId)
+}

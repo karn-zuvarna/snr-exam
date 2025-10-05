@@ -2,7 +2,6 @@ package snrdev
 
 import (
 	"context"
-	"log"
 	"strconv"
 
 	"gorm.io/gorm"
@@ -97,38 +96,7 @@ func (u *Onboarding) upsertPreMember(uuid string, emailData string, mobileData s
 	return nil
 }
 
-func (u *Onboarding) Snr_Dev_Exam(ctx context.Context, token string, publicKey string) (resp PreCitizenshipResp, err error) {
-	var scopeAppman, scopeCustomer, scopeCustomerData []func(*gorm.DB) *gorm.DB
-	var step int
-
-	tx := u.db.Begin()
-	defer tx.Commit()
-
-	data, err := u.service.VerifyToken(token, []byte(publicKey))
-	if err != nil {
-		return PreCitizenshipResp{}, err
-	}
-
-	memberId := u.getMemberId(data.MemberID, data.UserID)
-	var appman []AppmanDB
-	appman, err = u.getScopeAppman(scopeAppman, memberId, ctx, tx)
-	if err != nil {
-		return PreCitizenshipResp{}, err
-	}
-
-	if err = u.upsertPreMember(u.ext.GenUuid(), data.Email, data.Mobile, memberId, appman, ctx, tx); err != nil {
-		return PreCitizenshipResp{}, err
-	}
-
-	var preMemberResp []PreMemberDB
-	scopeCustomerData = append(scopeCustomerData, Where("member_id = ?", memberId))
-
-	err = u.repo.PreMember.JoinCustomer(ctx, u.db, &preMemberResp, scopeCustomerData...)
-	if err != nil {
-		tx.Rollback()
-		return PreCitizenshipResp{}, err
-	}
-	log.Printf("preMemberResp: %+v", preMemberResp)
+func (u *Onboarding) mapToMemberResponse(preMemberResp []PreMemberDB, emailData string, mobileData string, memberId string) (step int, resp PreCitizenshipResp) {
 	if len(preMemberResp) > 0 {
 		step = preMemberResp[0].Customer.Step
 		resp.CustomerData = CustomerData{
@@ -189,8 +157,45 @@ func (u *Onboarding) Snr_Dev_Exam(ctx context.Context, token string, publicKey s
 	}
 
 	resp.Member.ID = memberId
-	resp.Member.Email = data.Email
-	resp.Member.Mobile = data.Mobile
+	resp.Member.Email = emailData
+	resp.Member.Mobile = mobileData
+
+	return
+}
+
+func (u *Onboarding) Snr_Dev_Exam(ctx context.Context, token string, publicKey string) (resp PreCitizenshipResp, err error) {
+	var scopeAppman, scopeCustomer, scopeCustomerData []func(*gorm.DB) *gorm.DB
+	var step int
+
+	tx := u.db.Begin()
+	defer tx.Commit()
+
+	data, err := u.service.VerifyToken(token, []byte(publicKey))
+	if err != nil {
+		return PreCitizenshipResp{}, err
+	}
+
+	memberId := u.getMemberId(data.MemberID, data.UserID)
+	var appman []AppmanDB
+	appman, err = u.getScopeAppman(scopeAppman, memberId, ctx, tx)
+	if err != nil {
+		return PreCitizenshipResp{}, err
+	}
+
+	if err = u.upsertPreMember(u.ext.GenUuid(), data.Email, data.Mobile, memberId, appman, ctx, tx); err != nil {
+		return PreCitizenshipResp{}, err
+	}
+
+	var preMemberResp []PreMemberDB
+	scopeCustomerData = append(scopeCustomerData, Where("member_id = ?", memberId))
+
+	err = u.repo.PreMember.JoinCustomer(ctx, u.db, &preMemberResp, scopeCustomerData...)
+	if err != nil {
+		tx.Rollback()
+		return PreCitizenshipResp{}, err
+	}
+
+	step, resp = u.mapToMemberResponse(preMemberResp, data.Email, data.Mobile, memberId)
 	if len(appman) > 0 {
 		if step == 0 {
 			step = 50
