@@ -323,7 +323,7 @@ func (s *OnboardingUnitTestSuite) Test_setCitizenship_HasCustomers() {
 	s.Equal(preCitizenshipPreMemberGetAllReturn[0].Customer.Citizenship, response.Member.Citizenship)
 }
 
-func (s *OnboardingTestSuite) Test_Snr_Dev_Exam_NoAppman_Success() {
+func (s *OnboardingTestSuite) Test_Snr_Dev_Exam_v1_NoAppman_Success() {
 	var scopesAppman []func(*gorm.DB) *gorm.DB
 	var appman []snrdev.AppmanDB
 	var queryPrememberGetAll = []snrdev.PreMemberDB{}
@@ -369,12 +369,12 @@ func (s *OnboardingTestSuite) Test_Snr_Dev_Exam_NoAppman_Success() {
 
 	s.ext.EXPECT().GenUuid().AnyTimes().Return(uuid).Times(1)
 
-	var actual, err = s.uc.Snr_Dev_Exam(s.ctx, "token", "public_key")
+	var actual, err = s.uc.Snr_Dev_Exam_v1(s.ctx, "token", "public_key")
 	s.NoError(err)
 	s.Equal(preCitizenshipExpectedNoAppmanResponse, actual)
 }
 
-func (s *OnboardingTestSuite) Test_Snr_Dev_Exam_HasAppman_Success() {
+func (s *OnboardingTestSuite) Test_Snr_Dev_Exam_v1_HasAppman_Success() {
 	var scopesAppman []func(*gorm.DB) *gorm.DB
 	var appman []snrdev.AppmanDB
 	var scopeCustomerData []func(*gorm.DB) *gorm.DB
@@ -413,7 +413,7 @@ func (s *OnboardingTestSuite) Test_Snr_Dev_Exam_HasAppman_Success() {
 
 	s.ext.EXPECT().GenUuid().AnyTimes().Return(uuid).Times(1)
 
-	var actual, err = s.uc.Snr_Dev_Exam(s.ctx, "token", "public_key")
+	var actual, err = s.uc.Snr_Dev_Exam_v1(s.ctx, "token", "public_key")
 	s.NoError(err)
 	s.Equal(preCitizenshipExpectedHasAppmanResponse, actual)
 }

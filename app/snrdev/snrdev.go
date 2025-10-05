@@ -195,7 +195,7 @@ func (u *Onboarding) setCitizenship(resp *PreCitizenshipResp, memberId string, c
 	return
 }
 
-func (u *Onboarding) Snr_Dev_Exam(ctx context.Context, token string, publicKey string) (resp PreCitizenshipResp, err error) {
+func (u *Onboarding) Snr_Dev_Exam_v1(ctx context.Context, token string, publicKey string) (resp PreCitizenshipResp, err error) {
 	var step int
 
 	tx := u.db.Begin()
