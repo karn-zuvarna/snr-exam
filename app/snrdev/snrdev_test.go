@@ -3,6 +3,7 @@ package snrdev_test
 import (
 	"context"
 	"log"
+	"strconv"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
@@ -83,12 +84,19 @@ func TestIntegratedTest(t *testing.T) {
 }
 
 func (s *OnboardingTestSuite) Test_Snr_Dev_Exam_Success() {
-	s.service.EXPECT().VerifyToken("token", []byte("public_key")).Return(snrdev.PreCitizenToken{
-		Email:    "john.doe@example.com",
-		Mobile:   "0888888888",
-		MemberID: 1,
-		UserID:   1,
-	}, nil).Times(1)
+	var scopeCustomerData []func(*gorm.DB) *gorm.DB
+	var preMembers []snrdev.PreMemberDB
+
+	s.service.EXPECT().VerifyToken("token", []byte("public_key")).Return(precitizenToken, nil).Times(1)
+
+	scopeCustomerData = append(scopeCustomerData, snrdev.Where("member_id = ?", 1))
+	s.repo.PreMember.(*mock.MockIPreMember).EXPECT().JoinCustomer(s.ctx, s.db, &preMembers, gomock.AssignableToTypeOf(scopeCustomerData)).DoAndReturn(
+		func(ctx context.Context, db *gorm.DB, data *[]snrdev.PreMemberDB, scope ...func(*gorm.DB) *gorm.DB) error {
+			s.Require().Len(scope, 1)
+			*data = preCitizenshipPreMemberGetAllReturn
+			return nil
+		},
+	)
 
 	var customerDetails []snrdev.CustomerDetailsDB
 	s.repo.Customer.(*mock.MockICustomer).EXPECT().GetAll(s.ctx, s.db, &customerDetails, gomock.Any()).DoAndReturn(
@@ -124,14 +132,27 @@ func (s *OnboardingTestSuite) Test_getScopeAppman_Success() {
 }
 
 func (s *OnboardingTestSuite) Test_upsertPremember_Success() {
-	var scopeCustomerData []func(*gorm.DB) *gorm.DB
-	var preMembers []snrdev.PreMemberDB
-	scopeCustomerData = append(scopeCustomerData, snrdev.Where("member_id = ?", 1))
-	s.repo.PreMember.(*mock.MockIPreMember).EXPECT().JoinCustomer(s.ctx, s.db, &preMembers, gomock.AssignableToTypeOf(scopeCustomerData)).DoAndReturn(
+	var queryPrememberGetAll = []snrdev.PreMemberDB{}
+	var scopesAppman []func(*gorm.DB) *gorm.DB
+	var appman []snrdev.AppmanDB
+	tx := s.db.Begin()
+	defer tx.Commit()
+
+	scopesAppman = append(scopesAppman, snrdev.Where("member_id = ?", 1))
+	scopesAppman = append(scopesAppman, snrdev.Where("dopa_status = ?", true))
+	scopesAppman = append(scopesAppman, snrdev.Order("updated_at desc"))
+	s.ext.EXPECT().GenUuid().AnyTimes().Return(uuid).Times(1)
+	s.repo.PreMember.(*mock.MockIPreMember).EXPECT().GetAll(s.ctx, s.db, &queryPrememberGetAll, gomock.AssignableToTypeOf(scopesAppman)).DoAndReturn(
 		func(ctx context.Context, db *gorm.DB, data *[]snrdev.PreMemberDB, scope ...func(*gorm.DB) *gorm.DB) error {
-			s.Require().Len(scope, 1)
+			s.Require().Len(scope, 2)
 			*data = preCitizenshipPreMemberGetAllReturn
 			return nil
-		},
-	)
+		})
+	s.repo.PreMember.(*mock.MockIPreMember).EXPECT().UpdateAll(s.ctx, gomock.Any(), gomock.Any(), gomock.AssignableToTypeOf(scopesAppman)).DoAndReturn(
+		func(ctx context.Context, db *gorm.DB, data *snrdev.PreMemberDB, scope ...func(*gorm.DB) *gorm.DB) error {
+			*data = preCitizenshipPreMemberGetAllReturn[0]
+			return nil
+		})
+	err := s.uc.TestUpsertPremember(s.ext.GenUuid(), precitizenToken.Email, precitizenToken.Mobile, strconv.Itoa(precitizenToken.MemberID), appman, s.ctx, tx)
+	s.NoError(err)
 }

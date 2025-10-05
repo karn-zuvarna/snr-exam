@@ -7,7 +7,14 @@ import (
 )
 
 var (
-	now                              = time.Date(2025, 9, 30, 8, 31, 0, 0, time.UTC)
+	now             = time.Date(2025, 9, 30, 8, 31, 0, 0, time.UTC)
+	uuid            = "00000000-0000-0000-0000-000000000000"
+	precitizenToken = snrdev.PreCitizenToken{
+		Email:    "john.doe@example.com",
+		Mobile:   "0888888888",
+		MemberID: 1,
+		UserID:   1,
+	}
 	preCitizenshipAppmanGetAllReturn = []snrdev.AppmanDB{
 		{
 			ID:             "appman-id-1",

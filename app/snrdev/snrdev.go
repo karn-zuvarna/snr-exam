@@ -45,7 +45,9 @@ func (u *Onboarding) getScopeAppman(scopeAppman []func(*gorm.DB) *gorm.DB, membe
 	return appman, err
 }
 
-func (u *Onboarding) upsertPremember(uuid string, emailData string, mobileData string, memberId string, scope []func(*gorm.DB) *gorm.DB, appman []AppmanDB, preMemberRepo IPreMember, ctx context.Context, db *gorm.DB, tx *gorm.DB) error {
+func (u *Onboarding) upsertPreMember(uuid string, emailData string, mobileData string, memberId string, appman []AppmanDB, ctx context.Context, tx *gorm.DB) error {
+	var scope []func(*gorm.DB) *gorm.DB
+
 	if len(appman) == 0 {
 		var queryPremember = []PreMemberDB{}
 		premember := []PreMemberDB{
@@ -76,17 +78,17 @@ func (u *Onboarding) upsertPremember(uuid string, emailData string, mobileData s
 		if len(mobileData) > 0 && len(emailData) == 0 {
 			scope = append(scope, Where("mobile = ?", mobileData))
 		}
-		if err := preMemberRepo.GetAll(ctx, db, &queryPremember, scope...); err != nil {
+		if err := u.repo.PreMember.GetAll(ctx, u.db, &queryPremember, scope...); err != nil {
 			tx.Rollback()
 			return err
 		}
 		if len(queryPremember) <= 0 {
-			if err := preMemberRepo.CreateAll(ctx, db, &premember); err != nil {
+			if err := u.repo.PreMember.CreateAll(ctx, u.db, &premember); err != nil {
 				tx.Rollback()
 				return err
 			}
 		} else {
-			if err := preMemberRepo.UpdateAll(ctx, tx, &premember[0], scope...); err != nil {
+			if err := u.repo.PreMember.UpdateAll(ctx, tx, &premember[0], scope...); err != nil {
 				tx.Rollback()
 				return err
 			}
@@ -96,7 +98,7 @@ func (u *Onboarding) upsertPremember(uuid string, emailData string, mobileData s
 }
 
 func (u *Onboarding) Snr_Dev_Exam(ctx context.Context, token string, publicKey string) (resp PreCitizenshipResp, err error) {
-	var scope, scopeAppman, scopeCustomer, scopeCustomerData []func(*gorm.DB) *gorm.DB
+	var scopeAppman, scopeCustomer, scopeCustomerData []func(*gorm.DB) *gorm.DB
 	var step int
 
 	tx := u.db.Begin()
@@ -114,7 +116,7 @@ func (u *Onboarding) Snr_Dev_Exam(ctx context.Context, token string, publicKey s
 		return PreCitizenshipResp{}, err
 	}
 
-	if err = u.upsertPremember(u.ext.GenUuid(), data.Email, data.Mobile, memberId, scope, appman, u.repo.PreMember, ctx, u.db, tx); err != nil {
+	if err = u.upsertPreMember(u.ext.GenUuid(), data.Email, data.Mobile, memberId, appman, ctx, tx); err != nil {
 		return PreCitizenshipResp{}, err
 	}
 
