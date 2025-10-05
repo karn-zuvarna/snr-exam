@@ -84,19 +84,7 @@ func TestIntegratedTest(t *testing.T) {
 }
 
 func (s *OnboardingTestSuite) Test_Snr_Dev_Exam_Success() {
-	var scopeCustomerData []func(*gorm.DB) *gorm.DB
-	var preMembers []snrdev.PreMemberDB
-
 	s.service.EXPECT().VerifyToken("token", []byte("public_key")).Return(precitizenToken, nil).Times(1)
-
-	scopeCustomerData = append(scopeCustomerData, snrdev.Where("member_id = ?", 1))
-	s.repo.PreMember.(*mock.MockIPreMember).EXPECT().JoinCustomer(s.ctx, s.db, &preMembers, gomock.AssignableToTypeOf(scopeCustomerData)).DoAndReturn(
-		func(ctx context.Context, db *gorm.DB, data *[]snrdev.PreMemberDB, scope ...func(*gorm.DB) *gorm.DB) error {
-			s.Require().Len(scope, 1)
-			*data = preCitizenshipPreMemberGetAllReturn
-			return nil
-		},
-	)
 
 	var customerDetails []snrdev.CustomerDetailsDB
 	s.repo.Customer.(*mock.MockICustomer).EXPECT().GetAll(s.ctx, s.db, &customerDetails, gomock.Any()).DoAndReturn(
@@ -155,6 +143,26 @@ func (s *OnboardingTestSuite) Test_upsertPremember_UpdateAllSuccess() {
 		})
 	err := s.uc.TestUpsertPremember(s.ext.GenUuid(), precitizenToken.Email, precitizenToken.Mobile, strconv.Itoa(precitizenToken.MemberID), appman, s.ctx, tx)
 	s.NoError(err)
+}
+
+func (s *OnboardingTestSuite) Test_getCustomerInfo_Success() {
+	var scopeCustomerData []func(*gorm.DB) *gorm.DB
+	var preMembers []snrdev.PreMemberDB
+	tx := s.db.Begin()
+	defer tx.Commit()
+
+	scopeCustomerData = append(scopeCustomerData, snrdev.Where("member_id = ?", 1))
+	s.repo.PreMember.(*mock.MockIPreMember).EXPECT().JoinCustomer(s.ctx, s.db, &preMembers, gomock.AssignableToTypeOf(scopeCustomerData)).DoAndReturn(
+		func(ctx context.Context, db *gorm.DB, data *[]snrdev.PreMemberDB, scope ...func(*gorm.DB) *gorm.DB) error {
+			s.Require().Len(scope, 1)
+			*data = preCitizenshipPreMemberGetAllReturn
+			return nil
+		},
+	)
+
+	preMemberResp, err := s.uc.TestGetCustomerInfo(strconv.Itoa(precitizenToken.MemberID), s.ctx, tx)
+	s.Equal(preCitizenshipPreMemberGetAllReturn, preMemberResp)
+	s.Empty(err)
 }
 
 func (s *OnboardingTestSuite) Test_mapToMemberResponse_NoData() {

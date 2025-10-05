@@ -96,6 +96,17 @@ func (u *Onboarding) upsertPreMember(uuid string, emailData string, mobileData s
 	return nil
 }
 
+func (u *Onboarding) getCustomerInfo(memberId string, ctx context.Context, tx *gorm.DB) (preMemberResp []PreMemberDB, err error) {
+	var scopeCustomerData []func(*gorm.DB) *gorm.DB
+
+	scopeCustomerData = append(scopeCustomerData, Where("member_id = ?", memberId))
+	err = u.repo.PreMember.JoinCustomer(ctx, u.db, &preMemberResp, scopeCustomerData...)
+	if err != nil {
+		tx.Rollback()
+	}
+	return
+}
+
 func (u *Onboarding) mapToMemberResponse(preMemberResp []PreMemberDB, emailData string, mobileData string, memberId string) (step int, resp PreCitizenshipResp) {
 	if len(preMemberResp) > 0 {
 		step = preMemberResp[0].Customer.Step
@@ -164,7 +175,7 @@ func (u *Onboarding) mapToMemberResponse(preMemberResp []PreMemberDB, emailData 
 }
 
 func (u *Onboarding) Snr_Dev_Exam(ctx context.Context, token string, publicKey string) (resp PreCitizenshipResp, err error) {
-	var scopeAppman, scopeCustomer, scopeCustomerData []func(*gorm.DB) *gorm.DB
+	var scopeAppman, scopeCustomer []func(*gorm.DB) *gorm.DB
 	var step int
 
 	tx := u.db.Begin()
@@ -186,12 +197,8 @@ func (u *Onboarding) Snr_Dev_Exam(ctx context.Context, token string, publicKey s
 		return PreCitizenshipResp{}, err
 	}
 
-	var preMemberResp []PreMemberDB
-	scopeCustomerData = append(scopeCustomerData, Where("member_id = ?", memberId))
-
-	err = u.repo.PreMember.JoinCustomer(ctx, u.db, &preMemberResp, scopeCustomerData...)
+	preMemberResp, err := u.getCustomerInfo(memberId, ctx, tx)
 	if err != nil {
-		tx.Rollback()
 		return PreCitizenshipResp{}, err
 	}
 
