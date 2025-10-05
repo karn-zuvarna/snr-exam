@@ -31,7 +31,8 @@ func (u *Onboarding) getMemberId(memberID int, userID int) string {
 	}
 }
 
-func (u *Onboarding) getScopeAppman(scopeAppman []func(*gorm.DB) *gorm.DB, memberId string, ctx context.Context, tx *gorm.DB) ([]AppmanDB, error) {
+func (u *Onboarding) getScopeAppman(memberId string, ctx context.Context, tx *gorm.DB) ([]AppmanDB, error) {
+	var scopeAppman []func(*gorm.DB) *gorm.DB
 	var appman []AppmanDB
 
 	scopeAppman = append(scopeAppman, Where("member_id = ?", memberId))
@@ -184,7 +185,6 @@ func (u *Onboarding) getCustomerInfo(memberId string, ctx context.Context, tx *g
 }
 
 func (u *Onboarding) Snr_Dev_Exam(ctx context.Context, token string, publicKey string) (resp PreCitizenshipResp, err error) {
-	var scopeAppman []func(*gorm.DB) *gorm.DB
 	var step int
 
 	tx := u.db.Begin()
@@ -196,8 +196,7 @@ func (u *Onboarding) Snr_Dev_Exam(ctx context.Context, token string, publicKey s
 	}
 
 	memberId := u.getMemberId(data.MemberID, data.UserID)
-	var appman []AppmanDB
-	appman, err = u.getScopeAppman(scopeAppman, memberId, ctx, tx)
+	appman, err := u.getScopeAppman(memberId, ctx, tx)
 	if err != nil {
 		return PreCitizenshipResp{}, err
 	}
