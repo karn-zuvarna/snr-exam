@@ -32,6 +32,19 @@ func getMemberId(memberID int, userID int) string {
 	}
 }
 
+func getScopeAppman(scopeAppman []func(*gorm.DB) *gorm.DB, memberId string, appmanRepo IAppman, ctx context.Context, db *gorm.DB, tx *gorm.DB) ([]AppmanDB, error) {
+	var appman []AppmanDB
+
+	scopeAppman = append(scopeAppman, Where("member_id = ?", memberId))
+	scopeAppman = append(scopeAppman, Where("dopa_status = ?", true))
+	scopeAppman = append(scopeAppman, Order("updated_at desc"))
+	err := appmanRepo.GetAll(ctx, db, &appman, scopeAppman...)
+	if err != nil {
+		tx.Rollback()
+	}
+	return appman, err
+}
+
 func (u *Onboarding) Snr_Dev_Exam(ctx context.Context, token string, publicKey string) (resp PreCitizenshipResp, err error) {
 	var scope, scopeAppman, scopeCustomer, scopeCustomerData []func(*gorm.DB) *gorm.DB
 	var step int
@@ -43,14 +56,11 @@ func (u *Onboarding) Snr_Dev_Exam(ctx context.Context, token string, publicKey s
 	if err != nil {
 		return PreCitizenshipResp{}, err
 	}
+
 	memberId := getMemberId(data.MemberID, data.UserID)
 	var appman []AppmanDB
-
-	scopeAppman = append(scopeAppman, Where("member_id = ?", memberId))
-	scopeAppman = append(scopeAppman, Where("dopa_status = ?", true))
-	scopeAppman = append(scopeAppman, Order("updated_at desc"))
-	if err = u.repo.Appman.GetAll(ctx, u.db, &appman, scopeAppman...); err != nil {
-		tx.Rollback()
+	appman, err = getScopeAppman(scopeAppman, memberId, u.repo.Appman, ctx, u.db, tx)
+	if err != nil {
 		return PreCitizenshipResp{}, err
 	}
 
