@@ -23,6 +23,15 @@ func New(ext IExternal, db *gorm.DB, service IService, repo Irepo) *Onboarding {
 		repo:    repo,
 	}
 }
+
+func getMemberId(memberID int, userID int) string {
+	if memberID > 0 {
+		return strconv.Itoa(memberID)
+	} else {
+		return strconv.Itoa(userID)
+	}
+}
+
 func (u *Onboarding) Snr_Dev_Exam(ctx context.Context, token string, publicKey string) (resp PreCitizenshipResp, err error) {
 	var scope, scopeAppman, scopeCustomer, scopeCustomerData []func(*gorm.DB) *gorm.DB
 	var step int
@@ -34,13 +43,7 @@ func (u *Onboarding) Snr_Dev_Exam(ctx context.Context, token string, publicKey s
 	if err != nil {
 		return PreCitizenshipResp{}, err
 	}
-	var memberId string
-	if data.MemberID > 0 {
-		memberId = strconv.Itoa(data.MemberID)
-	} else {
-		memberId = strconv.Itoa(data.UserID)
-	}
-
+	memberId := getMemberId(data.MemberID, data.UserID)
 	var appman []AppmanDB
 
 	scopeAppman = append(scopeAppman, Where("member_id = ?", memberId))
