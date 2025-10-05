@@ -86,13 +86,6 @@ func TestIntegratedTest(t *testing.T) {
 func (s *OnboardingTestSuite) Test_Snr_Dev_Exam_Success() {
 	s.service.EXPECT().VerifyToken("token", []byte("public_key")).Return(precitizenToken, nil).Times(1)
 
-	var customerDetails []snrdev.CustomerDetailsDB
-	s.repo.Customer.(*mock.MockICustomer).EXPECT().GetAll(s.ctx, s.db, &customerDetails, gomock.Any()).DoAndReturn(
-		func(ctx context.Context, db *gorm.DB, data *[]snrdev.CustomerDetailsDB, scope ...func(*gorm.DB) *gorm.DB) error {
-			*data = []snrdev.CustomerDetailsDB{}
-			return nil
-		})
-
 	var actual, err = s.uc.Snr_Dev_Exam(s.ctx, "token", "public_key")
 	s.NoError(err)
 	s.Equal(preCitizenshipExpectedResponse, actual)
@@ -145,7 +138,7 @@ func (s *OnboardingTestSuite) Test_upsertPremember_UpdateAllSuccess() {
 	s.NoError(err)
 }
 
-func (s *OnboardingTestSuite) Test_getCustomerInfo_Success() {
+func (s *OnboardingTestSuite) Test_getJoinedCustomerInfo_Success() {
 	var scopeCustomerData []func(*gorm.DB) *gorm.DB
 	var preMembers []snrdev.PreMemberDB
 	tx := s.db.Begin()
@@ -181,4 +174,40 @@ func (s *OnboardingTestSuite) Test_mapToMemberResponse_Success() {
 	s.Equal(precitizenToken.Mobile, resp.CustomerData.Mobile)
 	s.Equal(strconv.Itoa(precitizenToken.MemberID), resp.CustomerData.MemberID)
 	s.Equal(preCitizenshipPreMemberGetAllReturn[0].Customer.ID, resp.CustomerData.Fullname.ID)
+}
+
+func (s *OnboardingTestSuite) Test_getCustomerInfo_NoResults() {
+	tx := s.db.Begin()
+	defer tx.Commit()
+
+	var customerDetails []snrdev.CustomerDetailsDB
+	s.repo.Customer.(*mock.MockICustomer).EXPECT().GetAll(s.ctx, s.db, &customerDetails, gomock.Any()).DoAndReturn(
+		func(ctx context.Context, db *gorm.DB, data *[]snrdev.CustomerDetailsDB, scope ...func(*gorm.DB) *gorm.DB) error {
+			*data = []snrdev.CustomerDetailsDB{}
+			return nil
+		})
+
+	customer, err := s.uc.TestGetCustomerInfo(strconv.Itoa(precitizenToken.MemberID), s.ctx, tx)
+	s.Empty(err)
+	s.Empty(customer)
+}
+
+func (s *OnboardingTestSuite) Test_getCustomerInfo_WithResults() {
+	tx := s.db.Begin()
+	defer tx.Commit()
+
+	var customerDetails []snrdev.CustomerDetailsDB
+	s.repo.Customer.(*mock.MockICustomer).EXPECT().GetAll(s.ctx, s.db, &customerDetails, gomock.Any()).DoAndReturn(
+		func(ctx context.Context, db *gorm.DB, data *[]snrdev.CustomerDetailsDB, scope ...func(*gorm.DB) *gorm.DB) error {
+			*data = []snrdev.CustomerDetailsDB{preCitizenshipPreMemberGetAllReturn[0].Customer}
+			return nil
+		})
+
+	customer, err := s.uc.TestGetCustomerInfo(strconv.Itoa(precitizenToken.MemberID), s.ctx, tx)
+	s.Empty(err)
+	s.NotEmpty(customer)
+	s.Equal(preCitizenshipPreMemberGetAllReturn[0].Customer.ID, customer[0].ID)
+	s.Equal(preCitizenshipPreMemberGetAllReturn[0].Customer.IDCard, customer[0].IDCard)
+	s.Equal(preCitizenshipPreMemberGetAllReturn[0].Customer.LaserCode, customer[0].LaserCode)
+	s.Equal(preCitizenshipPreMemberGetAllReturn[0].Customer.Citizenship, customer[0].Citizenship)
 }

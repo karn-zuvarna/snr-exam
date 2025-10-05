@@ -174,8 +174,17 @@ func (u *Onboarding) mapToMemberResponse(preMemberResp []PreMemberDB, emailData 
 	return
 }
 
+func (u *Onboarding) getCustomerInfo(memberId string, ctx context.Context, tx *gorm.DB) (customer []CustomerDetailsDB, err error) {
+	var scopeCustomer []func(*gorm.DB) *gorm.DB
+	scopeCustomer = append(scopeCustomer, Where("member_id = ?", memberId))
+	if err = u.repo.Customer.GetAll(ctx, u.db, &customer, scopeCustomer...); err != nil {
+		tx.Rollback()
+	}
+	return
+}
+
 func (u *Onboarding) Snr_Dev_Exam(ctx context.Context, token string, publicKey string) (resp PreCitizenshipResp, err error) {
-	var scopeAppman, scopeCustomer []func(*gorm.DB) *gorm.DB
+	var scopeAppman []func(*gorm.DB) *gorm.DB
 	var step int
 
 	tx := u.db.Begin()
@@ -208,10 +217,8 @@ func (u *Onboarding) Snr_Dev_Exam(ctx context.Context, token string, publicKey s
 			step = 50
 		}
 		resp.Member.Citizenship = 1
-		var customer []CustomerDetailsDB
-		scopeCustomer = append(scopeCustomer, Where("member_id = ?", memberId))
-		if err = u.repo.Customer.GetAll(ctx, u.db, &customer, scopeCustomer...); err != nil {
-			tx.Rollback()
+		customer, err := u.getCustomerInfo(memberId, ctx, tx)
+		if err != nil {
 			return PreCitizenshipResp{}, err
 		}
 		if len(customer) > 0 {
