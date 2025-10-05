@@ -196,8 +196,6 @@ func (u *Onboarding) setCitizenship(resp *PreCitizenshipResp, memberId string, c
 }
 
 func (u *Onboarding) Snr_Dev_Exam_v1(ctx context.Context, token string, publicKey string) (resp PreCitizenshipResp, err error) {
-	var step int
-
 	tx := u.db.Begin()
 	defer tx.Commit()
 
@@ -221,7 +219,7 @@ func (u *Onboarding) Snr_Dev_Exam_v1(ctx context.Context, token string, publicKe
 		return PreCitizenshipResp{}, err
 	}
 
-	step, resp = u.mapToMemberResponse(preMemberResp, data.Email, data.Mobile, memberId)
+	step, resp := u.mapToMemberResponse(preMemberResp, data.Email, data.Mobile, memberId)
 	if len(appman) > 0 {
 		if step == 0 {
 			step = 50
