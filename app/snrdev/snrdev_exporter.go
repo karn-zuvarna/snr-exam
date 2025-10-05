@@ -14,8 +14,8 @@ func (u *Onboarding) TestGetScopeAppman(memberId string, ctx context.Context, tx
 	return u.getScopeAppman(memberId, ctx, tx)
 }
 
-func (u *Onboarding) TestUpsertPremember(uuid string, emailData string, mobileData string, memberId string, appman []AppmanDB, ctx context.Context, tx *gorm.DB) error {
-	return u.upsertPreMember(uuid, emailData, mobileData, memberId, appman, ctx, tx)
+func (u *Onboarding) TestUpsertPremember(emailData string, mobileData string, memberId string, appman []AppmanDB, ctx context.Context, tx *gorm.DB) error {
+	return u.upsertPreMember(emailData, mobileData, memberId, appman, ctx, tx)
 }
 
 func (u *Onboarding) TestGetJoinedCustomerInfo(memberId string, ctx context.Context, tx *gorm.DB) (preMemberResp []PreMemberDB, err error) {

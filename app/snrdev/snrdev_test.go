@@ -186,7 +186,7 @@ func (s *OnboardingUnitTestSuite) Test_upsertPremember_UpdateAllSuccess() {
 			*data = preCitizenshipPreMemberGetAllReturn[0]
 			return nil
 		})
-	err := s.uc.TestUpsertPremember(s.ext.GenUuid(), precitizenToken.Email, precitizenToken.Mobile, strconv.Itoa(precitizenToken.MemberID), appman, s.ctx, tx)
+	err := s.uc.TestUpsertPremember(precitizenToken.Email, precitizenToken.Mobile, strconv.Itoa(precitizenToken.MemberID), appman, s.ctx, tx)
 	s.NoError(err)
 }
 
@@ -211,7 +211,7 @@ func (s *OnboardingUnitTestSuite) Test_upsertPremember_CreateAllSuccess() {
 			*data = preCitizenshipPreMemberGetAllReturn
 			return nil
 		})
-	err := s.uc.TestUpsertPremember(s.ext.GenUuid(), precitizenToken.Email, precitizenToken.Mobile, strconv.Itoa(precitizenToken.MemberID), appman, s.ctx, tx)
+	err := s.uc.TestUpsertPremember(precitizenToken.Email, precitizenToken.Mobile, strconv.Itoa(precitizenToken.MemberID), appman, s.ctx, tx)
 	s.NoError(err)
 }
 

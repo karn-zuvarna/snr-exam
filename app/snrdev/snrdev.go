@@ -44,14 +44,14 @@ func (u *Onboarding) getScopeAppman(memberId string, ctx context.Context, tx *go
 	return
 }
 
-func (u *Onboarding) upsertPreMember(uuid string, emailData string, mobileData string, memberId string, appman []AppmanDB, ctx context.Context, tx *gorm.DB) (err error) {
+func (u *Onboarding) upsertPreMember(emailData string, mobileData string, memberId string, appman []AppmanDB, ctx context.Context, tx *gorm.DB) (err error) {
 	var scope []func(*gorm.DB) *gorm.DB
 
 	if len(appman) == 0 {
 		var queryPremember = []PreMemberDB{}
 		premember := []PreMemberDB{
 			{
-				ID:       uuid,
+				ID:       u.ext.GenUuid(),
 				Email:    emailData,
 				Mobile:   mobileData,
 				MemberID: memberId,
@@ -210,7 +210,7 @@ func (u *Onboarding) Snr_Dev_Exam_v1(ctx context.Context, token string, publicKe
 		return PreCitizenshipResp{}, err
 	}
 
-	if err = u.upsertPreMember(u.ext.GenUuid(), data.Email, data.Mobile, memberId, appman, ctx, tx); err != nil {
+	if err = u.upsertPreMember(data.Email, data.Mobile, memberId, appman, ctx, tx); err != nil {
 		return PreCitizenshipResp{}, err
 	}
 
