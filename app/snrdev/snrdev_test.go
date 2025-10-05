@@ -160,7 +160,7 @@ func (s *OnboardingTestSuite) Test_getCustomerInfo_Success() {
 		},
 	)
 
-	preMemberResp, err := s.uc.TestGetCustomerInfo(strconv.Itoa(precitizenToken.MemberID), s.ctx, tx)
+	preMemberResp, err := s.uc.TestGetJoinedCustomerInfo(strconv.Itoa(precitizenToken.MemberID), s.ctx, tx)
 	s.Equal(preCitizenshipPreMemberGetAllReturn, preMemberResp)
 	s.Empty(err)
 }
