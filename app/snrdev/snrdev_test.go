@@ -138,6 +138,31 @@ func (s *OnboardingTestSuite) Test_upsertPremember_UpdateAllSuccess() {
 	s.NoError(err)
 }
 
+func (s *OnboardingTestSuite) Test_upsertPremember_CreateAllSuccess() {
+	var queryPrememberGetAll = []snrdev.PreMemberDB{}
+	var scopesAppman []func(*gorm.DB) *gorm.DB
+	var appman []snrdev.AppmanDB
+	tx := s.db.Begin()
+	defer tx.Commit()
+
+	scopesAppman = append(scopesAppman, snrdev.Where("member_id = ?", 1))
+	scopesAppman = append(scopesAppman, snrdev.Where("dopa_status = ?", true))
+	scopesAppman = append(scopesAppman, snrdev.Order("updated_at desc"))
+	s.ext.EXPECT().GenUuid().AnyTimes().Return(uuid).Times(1)
+	s.repo.PreMember.(*mock.MockIPreMember).EXPECT().GetAll(s.ctx, s.db, &queryPrememberGetAll, gomock.AssignableToTypeOf(scopesAppman)).DoAndReturn(
+		func(ctx context.Context, db *gorm.DB, data *[]snrdev.PreMemberDB, scope ...func(*gorm.DB) *gorm.DB) error {
+			*data = []snrdev.PreMemberDB{}
+			return nil
+		})
+	s.repo.PreMember.(*mock.MockIPreMember).EXPECT().CreateAll(s.ctx, gomock.Any(), gomock.Any(), gomock.AssignableToTypeOf(scopesAppman)).DoAndReturn(
+		func(ctx context.Context, db *gorm.DB, data *[]snrdev.PreMemberDB, scope ...func(*gorm.DB) *gorm.DB) error {
+			*data = preCitizenshipPreMemberGetAllReturn
+			return nil
+		})
+	err := s.uc.TestUpsertPremember(s.ext.GenUuid(), precitizenToken.Email, precitizenToken.Mobile, strconv.Itoa(precitizenToken.MemberID), appman, s.ctx, tx)
+	s.NoError(err)
+}
+
 func (s *OnboardingTestSuite) Test_getJoinedCustomerInfo_Success() {
 	var scopeCustomerData []func(*gorm.DB) *gorm.DB
 	var preMembers []snrdev.PreMemberDB
