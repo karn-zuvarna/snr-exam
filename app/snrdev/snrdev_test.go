@@ -24,6 +24,7 @@ type OnboardingTestSuite struct {
 	db      *gorm.DB
 	service *mock.MockIService
 	repo    snrdev.Irepo
+	mock    sqlmock.Sqlmock
 
 	uc *snrdev.Onboarding
 }
@@ -37,32 +38,31 @@ type OnboardingUnitTestSuite struct {
 	db      *gorm.DB
 	service *mock.MockIService
 	repo    snrdev.Irepo
+	mock    sqlmock.Sqlmock
 
 	uc *snrdev.Onboarding
 }
 
-func setupMock() *gorm.DB {
+func setupMock() (*gorm.DB, sqlmock.Sqlmock) {
 
 	sqlDB, mock, err := sqlmock.New()
 	if err != nil {
 		log.Printf("failed to create mock database: %v", err)
 	}
 
-	mock.ExpectQuery("SELECT VERSION()").WillReturnRows(sqlmock.NewRows([]string{"VERSION()"}).AddRow("8.0.23"))
-
-	db, err := gorm.Open(postgres.New(postgres.Config{Conn: sqlDB}), &gorm.Config{})
+	db, err := gorm.Open(postgres.New(postgres.Config{Conn: sqlDB, PreferSimpleProtocol: true}), &gorm.Config{})
 	if err != nil {
 		log.Printf("failed to connect to database: %v", err)
 	}
 
-	return db
+	return db, mock
 }
 
 func (s *OnboardingTestSuite) SetupTest() {
 	s.ctrl = gomock.NewController(s.T())
 
 	s.ctx = context.Background()
-	s.db = setupMock()
+	s.db, s.mock = setupMock()
 	s.ext = mock.NewMockIExternal(s.ctrl)
 	s.service = mock.NewMockIService(s.ctrl)
 	s.repo = snrdev.Irepo{
@@ -91,7 +91,7 @@ func (s *OnboardingUnitTestSuite) SetupTest() {
 	s.ctrl = gomock.NewController(s.T())
 
 	s.ctx = context.Background()
-	s.db = setupMock()
+	s.db, s.mock = setupMock()
 	s.ext = mock.NewMockIExternal(s.ctrl)
 	s.service = mock.NewMockIService(s.ctrl)
 	s.repo = snrdev.Irepo{
@@ -162,6 +162,94 @@ func (s *OnboardingUnitTestSuite) Test_getScopeAppman_Success() {
 	actual, err := s.uc.TestGetScopeAppman("1", s.ctx, s.db)
 	s.NoError(err)
 	s.Equal(preCitizenshipAppmanGetAllReturn, actual)
+}
+
+func (s *OnboardingUnitTestSuite) Test_buildContactScope_NoMobileAndEmail() {
+	mobile := ""
+	email := ""
+	var expectedScope []func(*gorm.DB) *gorm.DB
+	scope := s.uc.TestBuildContactScope(mobile, email)
+	s.Equal(expectedScope, scope)
+}
+
+func (s *OnboardingUnitTestSuite) Test_buildContactScope_MobileAndEmailContainsSpaces() {
+	mobile := "  "
+	email := "  "
+	var expectedScope []func(*gorm.DB) *gorm.DB
+	scope := s.uc.TestBuildContactScope(mobile, email)
+	s.Equal(expectedScope, scope)
+}
+
+func (s *OnboardingUnitTestSuite) Test_buildContactScope_MobileAndEmailContainsTabs() {
+	mobile := " \t "
+	email := " \t "
+	var expectedScope []func(*gorm.DB) *gorm.DB
+	scope := s.uc.TestBuildContactScope(mobile, email)
+	s.Equal(expectedScope, scope)
+}
+
+func (s *OnboardingUnitTestSuite) Test_buildContactScope_HasMobileButNoEmail() {
+	var contacts []MockContactModel
+
+	mobile := "0888888888"
+	email := ""
+
+	s.mock.ExpectQuery(`^SELECT \* FROM "contacts" WHERE mobile = \$1$`).
+		WithArgs(mobile).
+		WillReturnRows(sqlmock.NewRows([]string{"id"}))
+
+	scope := s.uc.TestBuildContactScope(mobile, email)
+	db := s.db.Table("contacts").Scopes(scope...).Find(&contacts)
+	s.NoError(db.Error)
+	s.NoError(s.mock.ExpectationsWereMet())
+}
+
+func (s *OnboardingUnitTestSuite) Test_buildContactScope_HasEmailButNoMobile() {
+	var contacts []MockContactModel
+
+	mobile := ""
+	email := "john.doe@example.com"
+
+	s.mock.ExpectQuery(`^SELECT \* FROM "contacts" WHERE email = \$1$`).
+		WithArgs(email).
+		WillReturnRows(sqlmock.NewRows([]string{"id"}))
+
+	scope := s.uc.TestBuildContactScope(mobile, email)
+	db := s.db.Table("contacts").Scopes(scope...).Find(&contacts)
+	s.NoError(db.Error)
+	s.NoError(s.mock.ExpectationsWereMet())
+}
+
+func (s *OnboardingUnitTestSuite) Test_buildContactScope_HasMobileAndEmail() {
+	var contacts []MockContactModel
+
+	mobile := "0888888888"
+	email := "john.doe@example.com"
+
+	s.mock.ExpectQuery(`^SELECT \* FROM "contacts" WHERE email = \$1 OR mobile = \$2`).
+		WithArgs(email, mobile).
+		WillReturnRows(sqlmock.NewRows([]string{"id"}))
+
+	scope := s.uc.TestBuildContactScope(mobile, email)
+	db := s.db.Table("contacts").Scopes(scope...).Find(&contacts)
+	s.NoError(db.Error)
+	s.NoError(s.mock.ExpectationsWereMet())
+}
+
+func (s *OnboardingUnitTestSuite) Test_buildContactScope_HasMobileAndEmailContainingSpace() {
+	var contacts []MockContactModel
+
+	mobile := " 0888888888  "
+	email := "  john.doe@example.com   "
+
+	s.mock.ExpectQuery(`^SELECT \* FROM "contacts" WHERE email = \$1 OR mobile = \$2`).
+		WithArgs("john.doe@example.com", "0888888888").
+		WillReturnRows(sqlmock.NewRows([]string{"id"}))
+
+	scope := s.uc.TestBuildContactScope(mobile, email)
+	db := s.db.Table("contacts").Scopes(scope...).Find(&contacts)
+	s.NoError(db.Error)
+	s.NoError(s.mock.ExpectationsWereMet())
 }
 
 func (s *OnboardingUnitTestSuite) Test_upsertPremember_UpdateAllSuccess() {

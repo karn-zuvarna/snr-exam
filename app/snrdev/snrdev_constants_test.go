@@ -6,6 +6,10 @@ import (
 	"github.com/karn-zuvarna/snr-exam/app/snrdev"
 )
 
+type MockContactModel struct {
+	ID int
+}
+
 var (
 	now             = time.Date(2025, 9, 30, 8, 31, 0, 0, time.UTC)
 	uuid            = "00000000-0000-0000-0000-000000000000"

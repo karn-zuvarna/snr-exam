@@ -3,6 +3,7 @@ package snrdev
 import (
 	"context"
 	"strconv"
+	"strings"
 
 	"github.com/karn-zuvarna/snr-exam/app/utils"
 
@@ -44,6 +45,20 @@ func (u *Onboarding) getScopeAppman(memberId string, ctx context.Context, tx *go
 	return
 }
 
+func (u *Onboarding) buildContactScope(mobile string, email string) (scope []func(*gorm.DB) *gorm.DB) {
+	mobile = strings.TrimSpace(mobile)
+	email = strings.TrimSpace(email)
+	switch {
+	case email != "" && mobile != "":
+		scope = append(scope, Where("email = ? OR mobile = ?", email, mobile))
+	case email != "":
+		scope = append(scope, Where("email = ?", email))
+	case mobile != "":
+		scope = append(scope, Where("mobile = ?", mobile))
+	}
+	return
+}
+
 func (u *Onboarding) upsertPreMember(emailData string, mobileData string, memberId string, appman []AppmanDB, ctx context.Context, tx *gorm.DB) (err error) {
 	var scope []func(*gorm.DB) *gorm.DB
 
@@ -68,15 +83,7 @@ func (u *Onboarding) upsertPreMember(emailData string, mobileData string, member
 		}
 
 		scope = append(scope, Select(col))
-		if len(mobileData) > 0 && len(emailData) > 0 {
-			scope = append(scope, Where("email = ? OR mobile = ?", emailData, mobileData))
-		}
-		if len(mobileData) == 0 && len(emailData) > 0 {
-			scope = append(scope, Where("email = ?", emailData))
-		}
-		if len(mobileData) > 0 && len(emailData) == 0 {
-			scope = append(scope, Where("mobile = ?", mobileData))
-		}
+		scope = append(scope, u.buildContactScope(emailData, mobileData)...)
 		if err = u.repo.PreMember.GetAll(ctx, u.db, &queryPremember, scope...); utils.RollbackOnError(tx, err) {
 			return
 		}
