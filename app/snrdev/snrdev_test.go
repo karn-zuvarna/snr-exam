@@ -411,8 +411,6 @@ func (s *OnboardingTestSuite) Test_Snr_Dev_Exam_v1_HasAppman_Success() {
 			return nil
 		}).Times(1)
 
-	s.ext.EXPECT().GenUuid().AnyTimes().Return(uuid).Times(1)
-
 	var actual, err = s.uc.Snr_Dev_Exam_v1(s.ctx, "token", "public_key")
 	s.NoError(err)
 	s.Equal(preCitizenshipExpectedHasAppmanResponse, actual)
