@@ -18,7 +18,7 @@ func (u *Onboarding) TestBuildContactScope(mobile string, email string) (scope [
 	return u.buildContactScope(mobile, email)
 }
 
-func (u *Onboarding) TestUpsertPremember(emailData string, mobileData string, memberId string, appman []AppmanDB, ctx context.Context, tx *gorm.DB) error {
+func (u *Onboarding) TestUpsertPreMember(emailData string, mobileData string, memberId string, appman []AppmanDB, ctx context.Context, tx *gorm.DB) error {
 	return u.upsertPreMember(emailData, mobileData, memberId, appman, ctx, tx)
 }
 
