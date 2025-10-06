@@ -35,12 +35,12 @@ func (u *Onboarding) getMemberId(memberID int, userID int) string {
 }
 
 func (u *Onboarding) getAppman(memberId string, ctx context.Context, tx *gorm.DB) (appman []AppmanDB, err error) {
-	var scopeAppman []func(*gorm.DB) *gorm.DB
+	var scope []func(*gorm.DB) *gorm.DB
 
-	scopeAppman = append(scopeAppman, Where("member_id = ?", memberId))
-	scopeAppman = append(scopeAppman, Where("dopa_status = ?", true))
-	scopeAppman = append(scopeAppman, Order("updated_at desc"))
-	err = u.repo.Appman.GetAll(ctx, u.db, &appman, scopeAppman...)
+	scope = append(scope, Where("member_id = ?", memberId))
+	scope = append(scope, Where("dopa_status = ?", true))
+	scope = append(scope, Order("updated_at desc"))
+	err = u.repo.Appman.GetAll(ctx, u.db, &appman, scope...)
 	utils.RollbackOnError(tx, err)
 	return
 }
