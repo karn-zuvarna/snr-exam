@@ -10,8 +10,8 @@ func (u *Onboarding) TestGetMemberId(memberID int, userID int) string {
 	return u.getMemberId(memberID, userID)
 }
 
-func (u *Onboarding) TestGetAppmanInfo(memberId string, ctx context.Context, tx *gorm.DB) ([]AppmanDB, error) {
-	return u.getAppmanInfo(memberId, ctx, tx)
+func (u *Onboarding) TestGetAppmans(memberId string, ctx context.Context, tx *gorm.DB) ([]AppmanDB, error) {
+	return u.getAppmans(memberId, ctx, tx)
 }
 
 func (u *Onboarding) TestBuildContactScope(mobile string, email string) (scope []func(*gorm.DB) *gorm.DB) {

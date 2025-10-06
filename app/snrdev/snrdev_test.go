@@ -159,7 +159,7 @@ func (s *OnboardingUnitTestSuite) Test_getAppmanInfo_Success() {
 			return nil
 		})
 
-	actual, err := s.uc.TestGetAppmanInfo("1", s.ctx, s.db)
+	actual, err := s.uc.TestGetAppmans("1", s.ctx, s.db)
 	s.NoError(err)
 	s.Equal(preCitizenshipAppmanGetAllReturn, actual)
 }

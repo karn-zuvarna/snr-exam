@@ -34,7 +34,7 @@ func (u *Onboarding) getMemberId(memberID int, userID int) string {
 	}
 }
 
-func (u *Onboarding) getAppmanInfo(memberId string, ctx context.Context, tx *gorm.DB) (appman []AppmanDB, err error) {
+func (u *Onboarding) getAppmans(memberId string, ctx context.Context, tx *gorm.DB) (appman []AppmanDB, err error) {
 	var scopeAppman []func(*gorm.DB) *gorm.DB
 
 	scopeAppman = append(scopeAppman, Where("member_id = ?", memberId))
@@ -59,10 +59,10 @@ func (u *Onboarding) buildContactScope(mobile string, email string) (scope []fun
 	return
 }
 
-func (u *Onboarding) upsertPreMember(emailData string, mobileData string, memberId string, appmanInfo []AppmanDB, ctx context.Context, tx *gorm.DB) (err error) {
+func (u *Onboarding) upsertPreMember(emailData string, mobileData string, memberId string, appmans []AppmanDB, ctx context.Context, tx *gorm.DB) (err error) {
 	var scope []func(*gorm.DB) *gorm.DB
 
-	if len(appmanInfo) == 0 {
+	if len(appmans) == 0 {
 		var queryPremember = []PreMemberDB{}
 		premember := []PreMemberDB{
 			{
@@ -215,12 +215,12 @@ func (u *Onboarding) Snr_Dev_Exam_v1(ctx context.Context, token string, publicKe
 	}
 
 	memberId := u.getMemberId(data.MemberID, data.UserID)
-	appmanInfo, err := u.getAppmanInfo(memberId, ctx, tx)
+	appmans, err := u.getAppmans(memberId, ctx, tx)
 	if err != nil {
 		return PreCitizenshipResp{}, err
 	}
 
-	if err = u.upsertPreMember(data.Email, data.Mobile, memberId, appmanInfo, ctx, tx); err != nil {
+	if err = u.upsertPreMember(data.Email, data.Mobile, memberId, appmans, ctx, tx); err != nil {
 		return PreCitizenshipResp{}, err
 	}
 
@@ -230,7 +230,7 @@ func (u *Onboarding) Snr_Dev_Exam_v1(ctx context.Context, token string, publicKe
 	}
 
 	step, resp := u.mapToMemberResponse(preMemberResp, data.Email, data.Mobile, memberId)
-	if len(appmanInfo) > 0 {
+	if len(appmans) > 0 {
 		if step == 0 {
 			step = 50
 		}
