@@ -215,7 +215,7 @@ func (u *Onboarding) Snr_Dev_Exam_v1(ctx context.Context, token string, publicKe
 	}
 
 	memberId := u.getMemberId(data.MemberID, data.UserID)
-	appmanInfo, err := u.getAppmanInfoInfo(memberId, ctx, tx)
+	appmanInfo, err := u.getAppmanInfo(memberId, ctx, tx)
 	if err != nil {
 		return PreCitizenshipResp{}, err
 	}
@@ -230,7 +230,7 @@ func (u *Onboarding) Snr_Dev_Exam_v1(ctx context.Context, token string, publicKe
 	}
 
 	step, resp := u.mapToMemberResponse(preMemberResp, data.Email, data.Mobile, memberId)
-	if len(appman) > 0 {
+	if len(appmanInfo) > 0 {
 		if step == 0 {
 			step = 50
 		}
