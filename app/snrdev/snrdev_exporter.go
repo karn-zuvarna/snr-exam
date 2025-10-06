@@ -18,16 +18,16 @@ func (u *Onboarding) TestBuildContactScope(mobile string, email string) (scope [
 	return u.buildContactScope(mobile, email)
 }
 
-func (u *Onboarding) TestUpsertPreMember(emailData string, mobileData string, memberId string, appman []AppmanDB, ctx context.Context, tx *gorm.DB) error {
-	return u.upsertPreMember(emailData, mobileData, memberId, appman, ctx, tx)
+func (u *Onboarding) TestUpsertPreMember(email string, mobile string, memberId string, appman []AppmanDB, ctx context.Context, tx *gorm.DB) error {
+	return u.upsertPreMember(email, mobile, memberId, appman, ctx, tx)
 }
 
 func (u *Onboarding) TestGetPreMemberJoinedCustomer(memberId string, ctx context.Context, tx *gorm.DB) (preMemberResp []PreMemberDB, err error) {
 	return u.getPreMemberJoinedCustomer(memberId, ctx, tx)
 }
 
-func (u *Onboarding) TestMapToPreMemberResponse(preMemberResp []PreMemberDB, emailData string, mobileData string, memberId string) (step int, resp PreCitizenshipResp) {
-	return u.mapToPreMemberResponse(preMemberResp, emailData, mobileData, memberId)
+func (u *Onboarding) TestMapToPreMemberResponse(preMemberResp []PreMemberDB, email string, mobile string, memberId string) (step int, resp PreCitizenshipResp) {
+	return u.mapToPreMemberResponse(preMemberResp, email, mobile, memberId)
 }
 
 func (u *Onboarding) TestGetCustomer(memberId string, ctx context.Context, tx *gorm.DB) (customer []CustomerDetailsDB, err error) {
