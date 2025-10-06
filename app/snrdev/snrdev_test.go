@@ -303,7 +303,7 @@ func (s *OnboardingUnitTestSuite) Test_upsertPremember_CreateAllSuccess() {
 	s.NoError(err)
 }
 
-func (s *OnboardingUnitTestSuite) Test_getJoinedCustomer_Success() {
+func (s *OnboardingUnitTestSuite) Test_getPreMemberJoinedCustomer_Success() {
 	var scopeCustomerData []func(*gorm.DB) *gorm.DB
 	var preMembers []snrdev.PreMemberDB
 	tx := s.db.Begin()
@@ -318,7 +318,7 @@ func (s *OnboardingUnitTestSuite) Test_getJoinedCustomer_Success() {
 		},
 	)
 
-	preMemberResp, err := s.uc.TestGetJoinedCustomer(strconv.Itoa(precitizenToken.MemberID), s.ctx, tx)
+	preMemberResp, err := s.uc.TestGetPreMemberJoinedCustomer(strconv.Itoa(precitizenToken.MemberID), s.ctx, tx)
 	s.Equal(preCitizenshipPreMemberGetAllReturn, preMemberResp)
 	s.Empty(err)
 }
