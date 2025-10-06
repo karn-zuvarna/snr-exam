@@ -4,6 +4,8 @@ import (
 	"context"
 	"strconv"
 
+	"github.com/karn-zuvarna/snr-exam/app/utils"
+
 	"gorm.io/gorm"
 )
 
@@ -38,9 +40,7 @@ func (u *Onboarding) getScopeAppman(memberId string, ctx context.Context, tx *go
 	scopeAppman = append(scopeAppman, Where("dopa_status = ?", true))
 	scopeAppman = append(scopeAppman, Order("updated_at desc"))
 	err = u.repo.Appman.GetAll(ctx, u.db, &appman, scopeAppman...)
-	if err != nil {
-		tx.Rollback()
-	}
+	utils.RollbackOnError(tx, err)
 	return
 }
 
@@ -77,18 +77,15 @@ func (u *Onboarding) upsertPreMember(emailData string, mobileData string, member
 		if len(mobileData) > 0 && len(emailData) == 0 {
 			scope = append(scope, Where("mobile = ?", mobileData))
 		}
-		if err := u.repo.PreMember.GetAll(ctx, u.db, &queryPremember, scope...); err != nil {
-			tx.Rollback()
+		if err := u.repo.PreMember.GetAll(ctx, u.db, &queryPremember, scope...); utils.RollbackOnError(tx, err) {
 			return err
 		}
 		if len(queryPremember) <= 0 {
-			if err := u.repo.PreMember.CreateAll(ctx, u.db, &premember); err != nil {
-				tx.Rollback()
+			if err := u.repo.PreMember.CreateAll(ctx, u.db, &premember); utils.RollbackOnError(tx, err) {
 				return err
 			}
 		} else {
-			if err := u.repo.PreMember.UpdateAll(ctx, tx, &premember[0], scope...); err != nil {
-				tx.Rollback()
+			if err := u.repo.PreMember.UpdateAll(ctx, tx, &premember[0], scope...); utils.RollbackOnError(tx, err) {
 				return err
 			}
 		}
@@ -101,9 +98,7 @@ func (u *Onboarding) getJoinedCustomerInfo(memberId string, ctx context.Context,
 
 	scopeCustomerData = append(scopeCustomerData, Where("member_id = ?", memberId))
 	err = u.repo.PreMember.JoinCustomer(ctx, u.db, &preMemberResp, scopeCustomerData...)
-	if err != nil {
-		tx.Rollback()
-	}
+	utils.RollbackOnError(tx, err)
 	return
 }
 
@@ -177,9 +172,8 @@ func (u *Onboarding) mapToMemberResponse(preMemberResp []PreMemberDB, emailData 
 func (u *Onboarding) getCustomerInfo(memberId string, ctx context.Context, tx *gorm.DB) (customer []CustomerDetailsDB, err error) {
 	var scopeCustomer []func(*gorm.DB) *gorm.DB
 	scopeCustomer = append(scopeCustomer, Where("member_id = ?", memberId))
-	if err = u.repo.Customer.GetAll(ctx, u.db, &customer, scopeCustomer...); err != nil {
-		tx.Rollback()
-	}
+	err = u.repo.Customer.GetAll(ctx, u.db, &customer, scopeCustomer...)
+	utils.RollbackOnError(tx, err)
 	return
 }
 
