@@ -341,7 +341,7 @@ func (s *OnboardingUnitTestSuite) Test_mapToMemberResponse_Success() {
 	s.Equal(preCitizenshipPreMemberGetAllReturn[0].Customer.ID, resp.CustomerData.Fullname.ID)
 }
 
-func (s *OnboardingUnitTestSuite) Test_getCustomerInfo_NoResults() {
+func (s *OnboardingUnitTestSuite) Test_getCustomer_NoResults() {
 	tx := s.db.Begin()
 	defer tx.Commit()
 
@@ -352,12 +352,12 @@ func (s *OnboardingUnitTestSuite) Test_getCustomerInfo_NoResults() {
 			return nil
 		})
 
-	customer, err := s.uc.TestGetCustomerInfo(strconv.Itoa(precitizenToken.MemberID), s.ctx, tx)
+	customer, err := s.uc.TestGetCustomer(strconv.Itoa(precitizenToken.MemberID), s.ctx, tx)
 	s.Empty(err)
 	s.Empty(customer)
 }
 
-func (s *OnboardingUnitTestSuite) Test_getCustomerInfo_WithResults() {
+func (s *OnboardingUnitTestSuite) Test_getCustomer_WithResults() {
 	tx := s.db.Begin()
 	defer tx.Commit()
 
@@ -368,7 +368,7 @@ func (s *OnboardingUnitTestSuite) Test_getCustomerInfo_WithResults() {
 			return nil
 		})
 
-	customer, err := s.uc.TestGetCustomerInfo(strconv.Itoa(precitizenToken.MemberID), s.ctx, tx)
+	customer, err := s.uc.TestGetCustomer(strconv.Itoa(precitizenToken.MemberID), s.ctx, tx)
 	s.Empty(err)
 	s.NotEmpty(customer)
 	s.Equal(preCitizenshipPreMemberGetAllReturn[0].Customer.ID, customer[0].ID)

@@ -176,7 +176,7 @@ func (u *Onboarding) mapToMemberResponse(preMemberResp []PreMemberDB, emailData 
 	return
 }
 
-func (u *Onboarding) getCustomerInfo(memberId string, ctx context.Context, tx *gorm.DB) (customer []CustomerDetailsDB, err error) {
+func (u *Onboarding) getCustomer(memberId string, ctx context.Context, tx *gorm.DB) (customer []CustomerDetailsDB, err error) {
 	var scopeCustomer []func(*gorm.DB) *gorm.DB
 	scopeCustomer = append(scopeCustomer, Where("member_id = ?", memberId))
 	err = u.repo.Customer.GetAll(ctx, u.db, &customer, scopeCustomer...)
@@ -186,12 +186,12 @@ func (u *Onboarding) getCustomerInfo(memberId string, ctx context.Context, tx *g
 
 func (u *Onboarding) setCitizenship(resp *PreCitizenshipResp, memberId string, ctx context.Context, tx *gorm.DB) (err error) {
 	resp.Member.Citizenship = 1
-	customer, err := u.getCustomerInfo(memberId, ctx, tx)
+	customers, err := u.getCustomer(memberId, ctx, tx)
 	if err != nil {
 		return
 	}
-	if len(customer) > 0 {
-		resp.Member.Citizenship = customer[0].Citizenship
+	if len(customers) > 0 {
+		resp.Member.Citizenship = customers[0].Citizenship
 	}
 	return
 }
