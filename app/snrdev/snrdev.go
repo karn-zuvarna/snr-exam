@@ -59,10 +59,10 @@ func (u *Onboarding) buildContactScope(mobile string, email string) (scope []fun
 	return
 }
 
-func (u *Onboarding) upsertPreMember(emailData string, mobileData string, memberId string, appman []AppmanDB, ctx context.Context, tx *gorm.DB) (err error) {
+func (u *Onboarding) upsertPreMember(emailData string, mobileData string, memberId string, appmanInfo []AppmanDB, ctx context.Context, tx *gorm.DB) (err error) {
 	var scope []func(*gorm.DB) *gorm.DB
 
-	if len(appman) == 0 {
+	if len(appmanInfo) == 0 {
 		var queryPremember = []PreMemberDB{}
 		premember := []PreMemberDB{
 			{
@@ -215,12 +215,12 @@ func (u *Onboarding) Snr_Dev_Exam_v1(ctx context.Context, token string, publicKe
 	}
 
 	memberId := u.getMemberId(data.MemberID, data.UserID)
-	appman, err := u.getAppmanInfo(memberId, ctx, tx)
+	appmanInfo, err := u.getAppmanInfoInfo(memberId, ctx, tx)
 	if err != nil {
 		return PreCitizenshipResp{}, err
 	}
 
-	if err = u.upsertPreMember(data.Email, data.Mobile, memberId, appman, ctx, tx); err != nil {
+	if err = u.upsertPreMember(data.Email, data.Mobile, memberId, appmanInfo, ctx, tx); err != nil {
 		return PreCitizenshipResp{}, err
 	}
 
