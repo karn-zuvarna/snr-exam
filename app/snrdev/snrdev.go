@@ -109,62 +109,62 @@ func (u *Onboarding) getJoinedCustomer(memberId string, ctx context.Context, tx 
 	return
 }
 
-func (u *Onboarding) mapToMemberResponse(preMember []PreMemberDB, emailData string, mobileData string, memberId string) (step int, resp PreCitizenshipResp) {
-	if len(preMember) > 0 {
-		step = preMember[0].Customer.Step
+func (u *Onboarding) mapToMemberResponse(preMembers []PreMemberDB, emailData string, mobileData string, memberId string) (step int, resp PreCitizenshipResp) {
+	if len(preMembers) > 0 {
+		step = preMembers[0].Customer.Step
 		resp.CustomerData = CustomerData{
-			Email:    preMember[0].Email,
-			Mobile:   preMember[0].Mobile,
-			MemberID: preMember[0].MemberID,
+			Email:    preMembers[0].Email,
+			Mobile:   preMembers[0].Mobile,
+			MemberID: preMembers[0].MemberID,
 			Fullname: &CustomerFullname{
-				ID:           preMember[0].Customer.ID,
-				MemberID:     preMember[0].Customer.MemberID,
-				Citizenship:  preMember[0].Customer.Citizenship,
-				Title:        preMember[0].Customer.Title,
-				ThName:       preMember[0].Customer.ThName,
-				ThMiddleName: preMember[0].Customer.ThMiddleName,
-				ThSurname:    preMember[0].Customer.ThSurname,
-				EnName:       preMember[0].Customer.EnName,
-				EnMiddleName: preMember[0].Customer.EnMiddleName,
-				EnSurname:    preMember[0].Customer.EnSurname,
-				Mobile:       preMember[0].Customer.Mobile,
-				Email:        preMember[0].Customer.Email,
-				Agreement:    preMember[0].Customer.Agreement,
-				Step:         preMember[0].Customer.Step,
-				Type:         preMember[0].Customer.Type,
+				ID:           preMembers[0].Customer.ID,
+				MemberID:     preMembers[0].Customer.MemberID,
+				Citizenship:  preMembers[0].Customer.Citizenship,
+				Title:        preMembers[0].Customer.Title,
+				ThName:       preMembers[0].Customer.ThName,
+				ThMiddleName: preMembers[0].Customer.ThMiddleName,
+				ThSurname:    preMembers[0].Customer.ThSurname,
+				EnName:       preMembers[0].Customer.EnName,
+				EnMiddleName: preMembers[0].Customer.EnMiddleName,
+				EnSurname:    preMembers[0].Customer.EnSurname,
+				Mobile:       preMembers[0].Customer.Mobile,
+				Email:        preMembers[0].Customer.Email,
+				Agreement:    preMembers[0].Customer.Agreement,
+				Step:         preMembers[0].Customer.Step,
+				Type:         preMembers[0].Customer.Type,
 			},
 			IDCard: &IDCardDetail{
-				DateOfBirth: preMember[0].Customer.DateOfBirth,
-				Status:      preMember[0].Customer.Status,
-				IDCard:      preMember[0].Customer.IDCard,
-				LaserCode:   preMember[0].Customer.LaserCode,
-				ExpireDate:  preMember[0].Customer.ExpireDate,
+				DateOfBirth: preMembers[0].Customer.DateOfBirth,
+				Status:      preMembers[0].Customer.Status,
+				IDCard:      preMembers[0].Customer.IDCard,
+				LaserCode:   preMembers[0].Customer.LaserCode,
+				ExpireDate:  preMembers[0].Customer.ExpireDate,
 			},
-			SuiteTest:     &preMember[0].SuiteTest,
-			Document:      &preMember[0].Document,
-			Addresses:     preMember[0].Addresses,
-			SourceOfFund:  &preMember[0].SourceOfFund,
-			Occupation:    &preMember[0].Occupation,
-			Banks:         preMember[0].Banks,
-			KnowledgeTest: preMember[0].Customer.KnowledgeTest,
+			SuiteTest:     &preMembers[0].SuiteTest,
+			Document:      &preMembers[0].Document,
+			Addresses:     preMembers[0].Addresses,
+			SourceOfFund:  &preMembers[0].SourceOfFund,
+			Occupation:    &preMembers[0].Occupation,
+			Banks:         preMembers[0].Banks,
+			KnowledgeTest: preMembers[0].Customer.KnowledgeTest,
 		}
 
-		if preMember[0].SuiteTest.ID == "" {
+		if preMembers[0].SuiteTest.ID == "" {
 			resp.CustomerData.SuiteTest = nil
 		}
-		if preMember[0].Document.ID == "" {
+		if preMembers[0].Document.ID == "" {
 			resp.CustomerData.Document = nil
 		}
-		if preMember[0].SourceOfFund.ID == "" {
+		if preMembers[0].SourceOfFund.ID == "" {
 			resp.CustomerData.SourceOfFund = nil
 		}
-		if preMember[0].Occupation.ID == "" {
+		if preMembers[0].Occupation.ID == "" {
 			resp.CustomerData.Occupation = nil
 		}
-		if len(preMember[0].Banks) == 0 {
+		if len(preMembers[0].Banks) == 0 {
 			resp.CustomerData.Banks = nil
 		}
-		if len(preMember[0].Addresses) == 0 {
+		if len(preMembers[0].Addresses) == 0 {
 			resp.CustomerData.Addresses = nil
 		}
 	}
@@ -224,12 +224,12 @@ func (u *Onboarding) Snr_Dev_Exam_v1(ctx context.Context, token string, publicKe
 		return PreCitizenshipResp{}, err
 	}
 
-	preMember, err := u.getJoinedCustomer(memberId, ctx, tx)
+	preMembers, err := u.getJoinedCustomer(memberId, ctx, tx)
 	if err != nil {
 		return PreCitizenshipResp{}, err
 	}
 
-	step, resp := u.mapToMemberResponse(preMember, data.Email, data.Mobile, memberId)
+	step, resp := u.mapToMemberResponse(preMembers, data.Email, data.Mobile, memberId)
 	if len(appmans) > 0 {
 		if step == 0 {
 			step = 50
