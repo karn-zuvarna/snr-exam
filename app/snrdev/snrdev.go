@@ -100,71 +100,71 @@ func (u *Onboarding) upsertPreMember(emailData string, mobileData string, member
 	return
 }
 
-func (u *Onboarding) getJoinedCustomer(memberId string, ctx context.Context, tx *gorm.DB) (preMemberResp []PreMemberDB, err error) {
+func (u *Onboarding) getJoinedCustomer(memberId string, ctx context.Context, tx *gorm.DB) (preMember []PreMemberDB, err error) {
 	var scopeCustomerData []func(*gorm.DB) *gorm.DB
 
 	scopeCustomerData = append(scopeCustomerData, Where("member_id = ?", memberId))
-	err = u.repo.PreMember.JoinCustomer(ctx, u.db, &preMemberResp, scopeCustomerData...)
+	err = u.repo.PreMember.JoinCustomer(ctx, u.db, &preMember, scopeCustomerData...)
 	utils.RollbackOnError(tx, err)
 	return
 }
 
-func (u *Onboarding) mapToMemberResponse(preMemberResp []PreMemberDB, emailData string, mobileData string, memberId string) (step int, resp PreCitizenshipResp) {
-	if len(preMemberResp) > 0 {
-		step = preMemberResp[0].Customer.Step
+func (u *Onboarding) mapToMemberResponse(preMember []PreMemberDB, emailData string, mobileData string, memberId string) (step int, resp PreCitizenshipResp) {
+	if len(preMember) > 0 {
+		step = preMember[0].Customer.Step
 		resp.CustomerData = CustomerData{
-			Email:    preMemberResp[0].Email,
-			Mobile:   preMemberResp[0].Mobile,
-			MemberID: preMemberResp[0].MemberID,
+			Email:    preMember[0].Email,
+			Mobile:   preMember[0].Mobile,
+			MemberID: preMember[0].MemberID,
 			Fullname: &CustomerFullname{
-				ID:           preMemberResp[0].Customer.ID,
-				MemberID:     preMemberResp[0].Customer.MemberID,
-				Citizenship:  preMemberResp[0].Customer.Citizenship,
-				Title:        preMemberResp[0].Customer.Title,
-				ThName:       preMemberResp[0].Customer.ThName,
-				ThMiddleName: preMemberResp[0].Customer.ThMiddleName,
-				ThSurname:    preMemberResp[0].Customer.ThSurname,
-				EnName:       preMemberResp[0].Customer.EnName,
-				EnMiddleName: preMemberResp[0].Customer.EnMiddleName,
-				EnSurname:    preMemberResp[0].Customer.EnSurname,
-				Mobile:       preMemberResp[0].Customer.Mobile,
-				Email:        preMemberResp[0].Customer.Email,
-				Agreement:    preMemberResp[0].Customer.Agreement,
-				Step:         preMemberResp[0].Customer.Step,
-				Type:         preMemberResp[0].Customer.Type,
+				ID:           preMember[0].Customer.ID,
+				MemberID:     preMember[0].Customer.MemberID,
+				Citizenship:  preMember[0].Customer.Citizenship,
+				Title:        preMember[0].Customer.Title,
+				ThName:       preMember[0].Customer.ThName,
+				ThMiddleName: preMember[0].Customer.ThMiddleName,
+				ThSurname:    preMember[0].Customer.ThSurname,
+				EnName:       preMember[0].Customer.EnName,
+				EnMiddleName: preMember[0].Customer.EnMiddleName,
+				EnSurname:    preMember[0].Customer.EnSurname,
+				Mobile:       preMember[0].Customer.Mobile,
+				Email:        preMember[0].Customer.Email,
+				Agreement:    preMember[0].Customer.Agreement,
+				Step:         preMember[0].Customer.Step,
+				Type:         preMember[0].Customer.Type,
 			},
 			IDCard: &IDCardDetail{
-				DateOfBirth: preMemberResp[0].Customer.DateOfBirth,
-				Status:      preMemberResp[0].Customer.Status,
-				IDCard:      preMemberResp[0].Customer.IDCard,
-				LaserCode:   preMemberResp[0].Customer.LaserCode,
-				ExpireDate:  preMemberResp[0].Customer.ExpireDate,
+				DateOfBirth: preMember[0].Customer.DateOfBirth,
+				Status:      preMember[0].Customer.Status,
+				IDCard:      preMember[0].Customer.IDCard,
+				LaserCode:   preMember[0].Customer.LaserCode,
+				ExpireDate:  preMember[0].Customer.ExpireDate,
 			},
-			SuiteTest:     &preMemberResp[0].SuiteTest,
-			Document:      &preMemberResp[0].Document,
-			Addresses:     preMemberResp[0].Addresses,
-			SourceOfFund:  &preMemberResp[0].SourceOfFund,
-			Occupation:    &preMemberResp[0].Occupation,
-			Banks:         preMemberResp[0].Banks,
-			KnowledgeTest: preMemberResp[0].Customer.KnowledgeTest,
+			SuiteTest:     &preMember[0].SuiteTest,
+			Document:      &preMember[0].Document,
+			Addresses:     preMember[0].Addresses,
+			SourceOfFund:  &preMember[0].SourceOfFund,
+			Occupation:    &preMember[0].Occupation,
+			Banks:         preMember[0].Banks,
+			KnowledgeTest: preMember[0].Customer.KnowledgeTest,
 		}
 
-		if preMemberResp[0].SuiteTest.ID == "" {
+		if preMember[0].SuiteTest.ID == "" {
 			resp.CustomerData.SuiteTest = nil
 		}
-		if preMemberResp[0].Document.ID == "" {
+		if preMember[0].Document.ID == "" {
 			resp.CustomerData.Document = nil
 		}
-		if preMemberResp[0].SourceOfFund.ID == "" {
+		if preMember[0].SourceOfFund.ID == "" {
 			resp.CustomerData.SourceOfFund = nil
 		}
-		if preMemberResp[0].Occupation.ID == "" {
+		if preMember[0].Occupation.ID == "" {
 			resp.CustomerData.Occupation = nil
 		}
-		if len(preMemberResp[0].Banks) == 0 {
+		if len(preMember[0].Banks) == 0 {
 			resp.CustomerData.Banks = nil
 		}
-		if len(preMemberResp[0].Addresses) == 0 {
+		if len(preMember[0].Addresses) == 0 {
 			resp.CustomerData.Addresses = nil
 		}
 	}
@@ -224,12 +224,12 @@ func (u *Onboarding) Snr_Dev_Exam_v1(ctx context.Context, token string, publicKe
 		return PreCitizenshipResp{}, err
 	}
 
-	preMemberResp, err := u.getJoinedCustomer(memberId, ctx, tx)
+	preMember, err := u.getJoinedCustomer(memberId, ctx, tx)
 	if err != nil {
 		return PreCitizenshipResp{}, err
 	}
 
-	step, resp := u.mapToMemberResponse(preMemberResp, data.Email, data.Mobile, memberId)
+	step, resp := u.mapToMemberResponse(preMember, data.Email, data.Mobile, memberId)
 	if len(appmans) > 0 {
 		if step == 0 {
 			step = 50
