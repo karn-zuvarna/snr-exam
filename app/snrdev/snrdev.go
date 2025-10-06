@@ -197,7 +197,16 @@ func (u *Onboarding) setCitizenship(resp *PreCitizenshipResp, memberId string, c
 
 func (u *Onboarding) Snr_Dev_Exam_v1(ctx context.Context, token string, publicKey string) (resp PreCitizenshipResp, err error) {
 	tx := u.db.Begin()
-	defer tx.Commit()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			panic(r)
+		} else if err != nil {
+			tx.Rollback()
+		} else {
+			tx.Commit()
+		}
+	}()
 
 	data, err := u.service.VerifyToken(token, []byte(publicKey))
 	if err != nil {
