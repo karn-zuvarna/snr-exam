@@ -77,16 +77,16 @@ func (u *Onboarding) upsertPreMember(emailData string, mobileData string, member
 		if len(mobileData) > 0 && len(emailData) == 0 {
 			scope = append(scope, Where("mobile = ?", mobileData))
 		}
-		if err := u.repo.PreMember.GetAll(ctx, u.db, &queryPremember, scope...); utils.RollbackOnError(tx, err) {
-			return err
+		if err = u.repo.PreMember.GetAll(ctx, u.db, &queryPremember, scope...); utils.RollbackOnError(tx, err) {
+			return
 		}
 		if len(queryPremember) <= 0 {
-			if err := u.repo.PreMember.CreateAll(ctx, u.db, &premember); utils.RollbackOnError(tx, err) {
-				return err
+			if err = u.repo.PreMember.CreateAll(ctx, u.db, &premember); utils.RollbackOnError(tx, err) {
+				return
 			}
 		} else {
-			if err := u.repo.PreMember.UpdateAll(ctx, tx, &premember[0], scope...); utils.RollbackOnError(tx, err) {
-				return err
+			if err = u.repo.PreMember.UpdateAll(ctx, tx, &premember[0], scope...); utils.RollbackOnError(tx, err) {
+				return
 			}
 		}
 	}
@@ -181,7 +181,7 @@ func (u *Onboarding) setCitizenship(resp *PreCitizenshipResp, memberId string, c
 	resp.Member.Citizenship = 1
 	customer, err := u.getCustomerInfo(memberId, ctx, tx)
 	if err != nil {
-		return err
+		return
 	}
 	if len(customer) > 0 {
 		resp.Member.Citizenship = customer[0].Citizenship
