@@ -143,7 +143,7 @@ func (s *OnboardingUnitTestSuite) Test_GetMemberId_HasMemberID() {
 	s.Equal(strconv.Itoa(member1), memberId)
 }
 
-func (s *OnboardingUnitTestSuite) Test_getScopeAppman_Success() {
+func (s *OnboardingUnitTestSuite) Test_getAppmanInfo_Success() {
 	var scopesAppman []func(*gorm.DB) *gorm.DB
 	var appman []snrdev.AppmanDB
 	tx := s.db.Begin()
@@ -159,7 +159,7 @@ func (s *OnboardingUnitTestSuite) Test_getScopeAppman_Success() {
 			return nil
 		})
 
-	actual, err := s.uc.TestGetScopeAppman("1", s.ctx, s.db)
+	actual, err := s.uc.TestGetAppmanInfo("1", s.ctx, s.db)
 	s.NoError(err)
 	s.Equal(preCitizenshipAppmanGetAllReturn, actual)
 }
