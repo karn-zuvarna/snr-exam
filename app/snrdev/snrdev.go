@@ -59,7 +59,7 @@ func (u *Onboarding) buildContactScope(mobile string, email string) (scope []fun
 	return
 }
 
-func (u *Onboarding) upsertPreMember(emailData string, mobileData string, memberId string, appmans []AppmanDB, ctx context.Context, tx *gorm.DB) (err error) {
+func (u *Onboarding) upsertPreMember(email string, mobile string, memberId string, appmans []AppmanDB, ctx context.Context, tx *gorm.DB) (err error) {
 	var scope []func(*gorm.DB) *gorm.DB
 
 	if len(appmans) == 0 {
@@ -67,8 +67,8 @@ func (u *Onboarding) upsertPreMember(emailData string, mobileData string, member
 		premember := []PreMemberDB{
 			{
 				ID:       u.ext.GenUuid(),
-				Email:    emailData,
-				Mobile:   mobileData,
+				Email:    email,
+				Mobile:   mobile,
 				MemberID: memberId,
 			},
 		}
@@ -83,7 +83,7 @@ func (u *Onboarding) upsertPreMember(emailData string, mobileData string, member
 		}
 
 		scope = append(scope, Select(col))
-		scope = append(scope, u.buildContactScope(emailData, mobileData)...)
+		scope = append(scope, u.buildContactScope(email, mobile)...)
 		if err = u.repo.PreMember.GetAll(ctx, u.db, &queryPremember, scope...); utils.RollbackOnError(tx, err) {
 			return
 		}
@@ -109,7 +109,7 @@ func (u *Onboarding) getPreMemberJoinedCustomer(memberId string, ctx context.Con
 	return
 }
 
-func (u *Onboarding) mapToPreMemberResponse(preMembers []PreMemberDB, emailData string, mobileData string, memberId string) (step int, resp PreCitizenshipResp) {
+func (u *Onboarding) mapToPreMemberResponse(preMembers []PreMemberDB, email string, mobile string, memberId string) (step int, resp PreCitizenshipResp) {
 	if len(preMembers) > 0 {
 		step = preMembers[0].Customer.Step
 		resp.CustomerData = CustomerData{
@@ -170,8 +170,8 @@ func (u *Onboarding) mapToPreMemberResponse(preMembers []PreMemberDB, emailData 
 	}
 
 	resp.Member.ID = memberId
-	resp.Member.Email = emailData
-	resp.Member.Mobile = mobileData
+	resp.Member.Email = email
+	resp.Member.Mobile = mobile
 
 	return
 }
