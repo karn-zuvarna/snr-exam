@@ -22,8 +22,8 @@ func (u *Onboarding) TestUpsertPremember(emailData string, mobileData string, me
 	return u.upsertPreMember(emailData, mobileData, memberId, appman, ctx, tx)
 }
 
-func (u *Onboarding) TestGetJoinedCustomerInfo(memberId string, ctx context.Context, tx *gorm.DB) (preMemberResp []PreMemberDB, err error) {
-	return u.getJoinedCustomerInfo(memberId, ctx, tx)
+func (u *Onboarding) TestGetJoinedCustomer(memberId string, ctx context.Context, tx *gorm.DB) (preMemberResp []PreMemberDB, err error) {
+	return u.getJoinedCustomer(memberId, ctx, tx)
 }
 
 func (u *Onboarding) TestMapToMemberResponse(preMemberResp []PreMemberDB, emailData string, mobileData string, memberId string) (step int, resp PreCitizenshipResp) {

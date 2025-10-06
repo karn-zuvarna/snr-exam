@@ -100,7 +100,7 @@ func (u *Onboarding) upsertPreMember(emailData string, mobileData string, member
 	return
 }
 
-func (u *Onboarding) getJoinedCustomerInfo(memberId string, ctx context.Context, tx *gorm.DB) (preMemberResp []PreMemberDB, err error) {
+func (u *Onboarding) getJoinedCustomer(memberId string, ctx context.Context, tx *gorm.DB) (preMemberResp []PreMemberDB, err error) {
 	var scopeCustomerData []func(*gorm.DB) *gorm.DB
 
 	scopeCustomerData = append(scopeCustomerData, Where("member_id = ?", memberId))
@@ -224,7 +224,7 @@ func (u *Onboarding) Snr_Dev_Exam_v1(ctx context.Context, token string, publicKe
 		return PreCitizenshipResp{}, err
 	}
 
-	preMemberResp, err := u.getJoinedCustomerInfo(memberId, ctx, tx)
+	preMemberResp, err := u.getJoinedCustomer(memberId, ctx, tx)
 	if err != nil {
 		return PreCitizenshipResp{}, err
 	}
