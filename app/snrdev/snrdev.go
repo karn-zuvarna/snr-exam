@@ -209,18 +209,18 @@ func (u *Onboarding) Snr_Dev_Exam_v1(ctx context.Context, token string, publicKe
 		}
 	}()
 
-	data, err := u.service.VerifyToken(token, []byte(publicKey))
+	userToken, err := u.service.VerifyToken(token, []byte(publicKey))
 	if err != nil {
 		return PreCitizenshipResp{}, err
 	}
 
-	memberId := u.getMemberId(data.MemberID, data.UserID)
+	memberId := u.getMemberId(userToken.MemberID, userToken.UserID)
 	appmans, err := u.getAppman(memberId, ctx, tx)
 	if err != nil {
 		return PreCitizenshipResp{}, err
 	}
 
-	if err = u.upsertPreMember(data.Email, data.Mobile, memberId, appmans, ctx, tx); err != nil {
+	if err = u.upsertPreMember(userToken.Email, userToken.Mobile, memberId, appmans, ctx, tx); err != nil {
 		return PreCitizenshipResp{}, err
 	}
 
@@ -229,7 +229,7 @@ func (u *Onboarding) Snr_Dev_Exam_v1(ctx context.Context, token string, publicKe
 		return PreCitizenshipResp{}, err
 	}
 
-	step, resp := u.convertPreMemberToPreCitizenshipResp(preMembers, data.Email, data.Mobile, memberId)
+	step, resp := u.convertPreMemberToPreCitizenshipResp(preMembers, userToken.Email, userToken.Mobile, memberId)
 	if len(appmans) > 0 {
 		if step == 0 {
 			step = 50
