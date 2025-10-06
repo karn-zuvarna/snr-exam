@@ -34,7 +34,7 @@ func (u *Onboarding) getMemberId(memberID int, userID int) string {
 	}
 }
 
-func (u *Onboarding) getAppmans(memberId string, ctx context.Context, tx *gorm.DB) (appman []AppmanDB, err error) {
+func (u *Onboarding) getAppman(memberId string, ctx context.Context, tx *gorm.DB) (appman []AppmanDB, err error) {
 	var scopeAppman []func(*gorm.DB) *gorm.DB
 
 	scopeAppman = append(scopeAppman, Where("member_id = ?", memberId))
@@ -109,7 +109,7 @@ func (u *Onboarding) getJoinedCustomer(memberId string, ctx context.Context, tx 
 	return
 }
 
-func (u *Onboarding) mapToMemberResponse(preMembers []PreMemberDB, emailData string, mobileData string, memberId string) (step int, resp PreCitizenshipResp) {
+func (u *Onboarding) mapToPreMemberResponse(preMembers []PreMemberDB, emailData string, mobileData string, memberId string) (step int, resp PreCitizenshipResp) {
 	if len(preMembers) > 0 {
 		step = preMembers[0].Customer.Step
 		resp.CustomerData = CustomerData{
@@ -215,7 +215,7 @@ func (u *Onboarding) Snr_Dev_Exam_v1(ctx context.Context, token string, publicKe
 	}
 
 	memberId := u.getMemberId(data.MemberID, data.UserID)
-	appmans, err := u.getAppmans(memberId, ctx, tx)
+	appmans, err := u.getAppman(memberId, ctx, tx)
 	if err != nil {
 		return PreCitizenshipResp{}, err
 	}
@@ -229,7 +229,7 @@ func (u *Onboarding) Snr_Dev_Exam_v1(ctx context.Context, token string, publicKe
 		return PreCitizenshipResp{}, err
 	}
 
-	step, resp := u.mapToMemberResponse(preMembers, data.Email, data.Mobile, memberId)
+	step, resp := u.mapToPreMemberResponse(preMembers, data.Email, data.Mobile, memberId)
 	if len(appmans) > 0 {
 		if step == 0 {
 			step = 50

@@ -129,21 +129,21 @@ func TestUnitTest(t *testing.T) {
 	suite.Run(t, new(OnboardingUnitTestSuite))
 }
 
-func (s *OnboardingUnitTestSuite) Test_GetMemberId_NoMemberID() {
+func (s *OnboardingUnitTestSuite) Test_getMemberId_NoMemberID() {
 	noMemberId := -1
 	userId := 2
 	memberId := s.uc.TestGetMemberId(noMemberId, userId)
 	s.Equal(strconv.Itoa(userId), memberId)
 }
 
-func (s *OnboardingUnitTestSuite) Test_GetMemberId_HasMemberID() {
+func (s *OnboardingUnitTestSuite) Test_getMemberId_HasMemberID() {
 	member1 := 1
 	userId := 2
 	memberId := s.uc.TestGetMemberId(member1, userId)
 	s.Equal(strconv.Itoa(member1), memberId)
 }
 
-func (s *OnboardingUnitTestSuite) Test_getAppmanInfo_Success() {
+func (s *OnboardingUnitTestSuite) Test_getAppman_Success() {
 	var scopesAppman []func(*gorm.DB) *gorm.DB
 	var appman []snrdev.AppmanDB
 	tx := s.db.Begin()
@@ -159,7 +159,7 @@ func (s *OnboardingUnitTestSuite) Test_getAppmanInfo_Success() {
 			return nil
 		})
 
-	actual, err := s.uc.TestGetAppmans("1", s.ctx, s.db)
+	actual, err := s.uc.TestGetAppman("1", s.ctx, s.db)
 	s.NoError(err)
 	s.Equal(preCitizenshipAppmanGetAllReturn, actual)
 }
@@ -323,8 +323,8 @@ func (s *OnboardingUnitTestSuite) Test_getJoinedCustomer_Success() {
 	s.Empty(err)
 }
 
-func (s *OnboardingUnitTestSuite) Test_mapToMemberResponse_NoData() {
-	step, resp := s.uc.TestMapToMemberResponse([]snrdev.PreMemberDB{}, precitizenToken.Email, precitizenToken.Mobile, strconv.Itoa(precitizenToken.MemberID))
+func (s *OnboardingUnitTestSuite) Test_mapToPreMemberResponse_NoData() {
+	step, resp := s.uc.TestMapToPreMemberResponse([]snrdev.PreMemberDB{}, precitizenToken.Email, precitizenToken.Mobile, strconv.Itoa(precitizenToken.MemberID))
 	s.Empty(step)
 	s.Equal(precitizenToken.Email, resp.Member.Email)
 	s.Equal(precitizenToken.Mobile, resp.Member.Mobile)
@@ -332,7 +332,7 @@ func (s *OnboardingUnitTestSuite) Test_mapToMemberResponse_NoData() {
 }
 
 func (s *OnboardingUnitTestSuite) Test_mapToMemberResponse_Success() {
-	step, resp := s.uc.TestMapToMemberResponse(preCitizenshipPreMemberGetAllReturn, precitizenToken.Email, precitizenToken.Mobile, strconv.Itoa(precitizenToken.MemberID))
+	step, resp := s.uc.TestMapToPreMemberResponse(preCitizenshipPreMemberGetAllReturn, precitizenToken.Email, precitizenToken.Mobile, strconv.Itoa(precitizenToken.MemberID))
 	s.NotEmpty(step)
 	s.NotEmpty(resp)
 	s.Equal(precitizenToken.Email, resp.CustomerData.Email)

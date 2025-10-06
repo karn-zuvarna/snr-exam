@@ -10,8 +10,8 @@ func (u *Onboarding) TestGetMemberId(memberID int, userID int) string {
 	return u.getMemberId(memberID, userID)
 }
 
-func (u *Onboarding) TestGetAppmans(memberId string, ctx context.Context, tx *gorm.DB) ([]AppmanDB, error) {
-	return u.getAppmans(memberId, ctx, tx)
+func (u *Onboarding) TestGetAppman(memberId string, ctx context.Context, tx *gorm.DB) ([]AppmanDB, error) {
+	return u.getAppman(memberId, ctx, tx)
 }
 
 func (u *Onboarding) TestBuildContactScope(mobile string, email string) (scope []func(*gorm.DB) *gorm.DB) {
@@ -26,8 +26,8 @@ func (u *Onboarding) TestGetJoinedCustomer(memberId string, ctx context.Context,
 	return u.getJoinedCustomer(memberId, ctx, tx)
 }
 
-func (u *Onboarding) TestMapToMemberResponse(preMemberResp []PreMemberDB, emailData string, mobileData string, memberId string) (step int, resp PreCitizenshipResp) {
-	return u.mapToMemberResponse(preMemberResp, emailData, mobileData, memberId)
+func (u *Onboarding) TestMapToPreMemberResponse(preMemberResp []PreMemberDB, emailData string, mobileData string, memberId string) (step int, resp PreCitizenshipResp) {
+	return u.mapToPreMemberResponse(preMemberResp, emailData, mobileData, memberId)
 }
 
 func (u *Onboarding) TestGetCustomer(memberId string, ctx context.Context, tx *gorm.DB) (customer []CustomerDetailsDB, err error) {
