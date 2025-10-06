@@ -326,16 +326,16 @@ func (s *OnboardingUnitTestSuite) Test_getPreMemberJoinedCustomer_Success() {
 	s.Empty(err)
 }
 
-func (s *OnboardingUnitTestSuite) Test_mapToPreMemberResponse_NoData() {
-	step, resp := s.uc.TestMapToPreMemberResponse([]snrdev.PreMemberDB{}, precitizenToken.Email, precitizenToken.Mobile, strconv.Itoa(precitizenToken.MemberID))
+func (s *OnboardingUnitTestSuite) Test_ConvertPreMemberToPreCitizenshipResp_NoData() {
+	step, resp := s.uc.TestConvertPreMemberToPreCitizenshipResp([]snrdev.PreMemberDB{}, precitizenToken.Email, precitizenToken.Mobile, strconv.Itoa(precitizenToken.MemberID))
 	s.Empty(step)
 	s.Equal(precitizenToken.Email, resp.Member.Email)
 	s.Equal(precitizenToken.Mobile, resp.Member.Mobile)
 	s.Equal(strconv.Itoa(precitizenToken.MemberID), resp.Member.ID)
 }
 
-func (s *OnboardingUnitTestSuite) Test_mapToMemberResponse_Success() {
-	step, resp := s.uc.TestMapToPreMemberResponse(preCitizenshipPreMemberGetAllReturn, precitizenToken.Email, precitizenToken.Mobile, strconv.Itoa(precitizenToken.MemberID))
+func (s *OnboardingUnitTestSuite) Test_ConvertPreMemberToPreCitizenshipResp_Success() {
+	step, resp := s.uc.TestConvertPreMemberToPreCitizenshipResp(preCitizenshipPreMemberGetAllReturn, precitizenToken.Email, precitizenToken.Mobile, strconv.Itoa(precitizenToken.MemberID))
 	s.NotEmpty(step)
 	s.NotEmpty(resp)
 	s.Equal(precitizenToken.Email, resp.CustomerData.Email)

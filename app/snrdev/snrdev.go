@@ -109,7 +109,7 @@ func (u *Onboarding) getPreMemberJoinedCustomer(memberId string, ctx context.Con
 	return
 }
 
-func (u *Onboarding) mapToPreMemberResponse(preMembers []PreMemberDB, email string, mobile string, memberId string) (step int, resp PreCitizenshipResp) {
+func (u *Onboarding) convertPreMemberToPreCitizenshipResp(preMembers []PreMemberDB, email string, mobile string, memberId string) (step int, resp PreCitizenshipResp) {
 	if len(preMembers) > 0 {
 		step = preMembers[0].Customer.Step
 		resp.CustomerData = CustomerData{
@@ -229,7 +229,7 @@ func (u *Onboarding) Snr_Dev_Exam_v1(ctx context.Context, token string, publicKe
 		return PreCitizenshipResp{}, err
 	}
 
-	step, resp := u.mapToPreMemberResponse(preMembers, data.Email, data.Mobile, memberId)
+	step, resp := u.convertPreMemberToPreCitizenshipResp(preMembers, data.Email, data.Mobile, memberId)
 	if len(appmans) > 0 {
 		if step == 0 {
 			step = 50
